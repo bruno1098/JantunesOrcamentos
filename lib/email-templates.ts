@@ -143,7 +143,7 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
 
           <!-- Botão -->
           <p style="text-align: center;">
-            <a href="http://localhost:3000/meus-pedidos" class="button">Acompanhar Pedido</a>
+            <a href="https://locacaodetoalhas.vercel.app/meus-pedidos" class="button">Acompanhar Pedido</a>
           </p>
         </div>
         <!-- Rodapé -->
