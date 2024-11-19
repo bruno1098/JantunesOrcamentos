@@ -42,24 +42,25 @@ export default function OrcamentoPage() {
     setDataRetirada(dataRetiradaSelecionada);
   };
 
-  const verificarEmailDebounced = useCallback(
-    debounce(async (email: string) => {
-      if (email && email.includes('@')) {
+  const verificarEmailDebounced = useCallback((email: string) => {
+    const debouncedCheck = debounce(async (emailToCheck: string) => {
+      if (emailToCheck && emailToCheck.includes('@')) {
         try {
           setVerificandoEmail(true);
-          const valido = await verificarEmail(email);
+          const valido = await verificarEmail(emailToCheck);
           setEmailValido(valido);
         } catch (error) {
           console.error('Erro na verificação:', error);
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          setEmailValido(emailRegex.test(email));
+          setEmailValido(emailRegex.test(emailToCheck));
         } finally {
           setVerificandoEmail(false);
         }
       }
-    }, 1000),
-    [setVerificandoEmail, setEmailValido]
-  );
+    }, 1000);
+    
+    debouncedCheck(email);
+  }, []);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const novoEmail = e.target.value;
