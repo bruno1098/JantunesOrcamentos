@@ -58,7 +58,7 @@ export default function OrcamentoPage() {
         }
       }
     }, 1000),
-    []
+    [setVerificandoEmail, setEmailValido]
   );
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
