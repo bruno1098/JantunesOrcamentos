@@ -32,13 +32,59 @@ export function Testimonials() {
     threshold: 0.1,
   });
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.4 }
+    }
+  };
+
+  const titleVariants = {
+    hidden: { 
+      opacity: 0,
+      scale: 0.9,
+      filter: "blur(10px)"
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.7,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { 
+      opacity: 0,
+      x: -100,
+      rotateY: 45
+    },
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      rotateY: 0,
+      transition: {
+        duration: 0.8,
+        delay: i * 0.2,
+        ease: [0.23, 1, 0.32, 1]
+      }
+    })
+  };
+
   return (
     <section ref={ref} className="py-20 px-4 md:px-8 bg-neutral-50 dark:bg-neutral-900">
-      <div className="max-w-7xl mx-auto">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate={inView ? "visible" : "hidden"}
+        className="max-w-7xl mx-auto"
+      >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          variants={titleVariants}
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -53,10 +99,9 @@ export function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg"
+              custom={index}
+              variants={cardVariants}
+              className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center mb-6">
                 {[...Array(5)].map((_, i) => (
@@ -88,7 +133,7 @@ export function Testimonials() {
             </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
