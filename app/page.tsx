@@ -10,6 +10,7 @@ import { Testimonials } from "@/components/testimonials";
 import { Contact } from "@/components/contact";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export default function Home() {
   const [heroRef, heroInView] = useInView({
@@ -53,6 +54,7 @@ export default function Home() {
   }, []);
   return (
     <div className="w-full">
+      <WhatsAppButton />
       {/* Seção Hero */}
     
 <motion.section
