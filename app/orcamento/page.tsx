@@ -8,6 +8,8 @@ import { verificarEmail, enviarEmail } from "@/lib/email-utils";
 import debounce from 'lodash/debounce';
 import { toast } from 'react-hot-toast';
 import { gerarEmailCliente, gerarEmailAdmin } from "@/lib/email-templates";
+import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function OrcamentoPage() {
   const router = useRouter();
@@ -153,158 +155,185 @@ export default function OrcamentoPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-20 px-4 md:px-8">
-      <form 
-        onSubmit={handleSubmit} 
-        className="w-full max-w-lg bg-white dark:bg-neutral-800 p-8 rounded-lg shadow"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center">Solicitar Orçamento</h2>
-        
-        <div className="mb-4">
-          <label className="block mb-2">Email:</label>
-          <div className="relative">
-            <input 
-              type="email" 
-              required 
-              value={email}
-              onChange={handleEmailChange}
-              onBlur={() => {
-                if (email.includes('@') && email.includes('.')) {
-                  verificarEmailDebounced(email);
-                }
-              }}
-              className={`w-full p-2 border rounded ${
-                !emailValido && email.includes('@') ? 'border-red-500' : ''
-              }`}
-            />
-            {verificandoEmail && (
-              <span className="absolute right-2 top-2 text-sm text-gray-500">
-                Verificando...
-              </span>
-            )}
-            {!emailValido && email.includes('@') && (
-              <p className="text-red-500 text-sm mt-1">
-                Por favor, insira um email válido
-              </p>
-            )}
+    <main className="min-h-screen bg-background pt-24">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card p-6 rounded-lg shadow-lg"
+        >
+          <h1 className="text-3xl font-bold mb-6">Solicitar Orçamento</h1>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Coluna da esquerda - Formulário */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Seus Dados</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <div className="relative">
+                    <input 
+                      type="email" 
+                      required 
+                      value={email}
+                      onChange={handleEmailChange}
+                      className="w-full p-2 border rounded"
+                    />
+                    {verificandoEmail && (
+                      <span className="absolute right-2 top-2 text-sm text-gray-500">
+                        Verificando...
+                      </span>
+                    )}
+                    {!emailValido && email.includes('@') && (
+                      <p className="text-red-500 text-sm mt-1">
+                        Por favor, insira um email válido
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nome do Evento</label>
+                  <input 
+                    type="text"
+                    required
+                    value={nomeEvento}
+                    onChange={(e) => setNomeEvento(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2">CEP do Local:</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={cep}
+                    onChange={(e) => {
+                      const valor = e.target.value.replace(/\D/g, '');
+                      setCep(valor);
+                      if (valor.length === 8) buscarCep(valor);
+                    }}
+                    maxLength={8}
+                    placeholder="Digite apenas números"
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2">Endereço:</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={endereco.rua}
+                    readOnly
+                    className="w-full p-2 border rounded mb-2"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      type="text" 
+                      required 
+                      value={endereco.bairro}
+                      readOnly
+                      placeholder="Bairro"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input 
+                      type="text" 
+                      required 
+                      value={endereco.cidade}
+                      readOnly
+                      placeholder="Cidade"
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block mb-2">Data de Entrega:</label>
+                    <input 
+                      type="date" 
+                      required 
+                      value={dataEntrega}
+                      min={getDataMinima()}
+                      onChange={(e) => {
+                        setDataEntrega(e.target.value);
+                        if (dataRetirada && dataRetirada < e.target.value) {
+                          setDataRetirada(e.target.value);
+                        }
+                      }}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2">Data de Retirada:</label>
+                    <input 
+                      type="date" 
+                      required 
+                      value={dataRetirada}
+                      min={dataEntrega || getDataMinima()}
+                      onChange={(e) => validarDataRetirada(e.target.value)}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2">Mensagem:</label>
+                  <textarea 
+                    value={mensagem}
+                    onChange={(e) => setMensagem(e.target.value)}
+                    className="w-full p-2 border rounded"
+                    rows={4}
+                  ></textarea>
+                </div>
+              </form>
+            </div>
+
+            {/* Coluna da direita - Resumo do pedido */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Itens Selecionados</h2>
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
+                    <div className="w-20 h-20 relative rounded-md overflow-hidden">
+                      <Image
+                        src={item.image || '/placeholder.jpg'}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium">{item.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Quantidade: {item.quantity}
+                      </p>
+                      {item.observation && (
+                        <p className="text-sm text-muted-foreground">
+                          Obs: {item.observation}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="mb-4">
-          <label className="block mb-2">Nome do Evento:</label>
-          <input 
-            type="text" 
-            required 
-            value={nomeEvento}
-            onChange={(e) => setNomeEvento(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-       
-        <div className="mb-4">
-          <label className="block mb-2">CEP do Local:</label>
-          <input 
-            type="text" 
-            required 
-            value={cep}
-            onChange={(e) => {
-              const valor = e.target.value.replace(/\D/g, '');
-              setCep(valor);
-              if (valor.length === 8) buscarCep(valor);
-            }}
-            maxLength={8}
-            placeholder="Digite apenas números"
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block mb-2">Endereço:</label>
-          <input 
-            type="text" 
-            required 
-            value={endereco.rua}
-            readOnly
-            className="w-full p-2 border rounded mb-2"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input 
-              type="text" 
-              required 
-              value={endereco.bairro}
-              readOnly
-              placeholder="Bairro"
-              className="w-full p-2 border rounded"
-            />
-            <input 
-              type="text" 
-              required 
-              value={endereco.cidade}
-              readOnly
-              placeholder="Cidade"
-              className="w-full p-2 border rounded"
-            />
+          {/* Botão único centralizado abaixo das duas colunas */}
+          <div className="mt-8">
+            <Button 
+              type="submit" 
+              className="w-full"
+              onClick={handleSubmit}
+            >
+              Enviar Orçamento
+            </Button>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block mb-2">Data de Entrega:</label>
-            <input 
-              type="date" 
-              required 
-              value={dataEntrega}
-              min={getDataMinima()}
-              onChange={(e) => {
-                setDataEntrega(e.target.value);
-                if (dataRetirada && dataRetirada < e.target.value) {
-                  setDataRetirada(e.target.value);
-                }
-              }}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-2">Data de Retirada:</label>
-            <input 
-              type="date" 
-              required 
-              value={dataRetirada}
-              min={dataEntrega || getDataMinima()}
-              onChange={(e) => validarDataRetirada(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </div>
-
-        {items.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">Itens do Carrinho:</h3>
-            <ul className="list-disc list-inside">
-              {items.map(item => (
-                <li key={item.id}>
-                  {item.name} x {item.quantity} {item.observation && `- ${item.observation}`}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block mb-2">Mensagem:</label>
-          <textarea 
-            value={mensagem}
-            onChange={(e) => setMensagem(e.target.value)}
-            className="w-full p-2 border rounded"
-            rows={4}
-          ></textarea>
-        </div>
-
-        <Button type="submit" className="w-full">
-          Enviar Solicitação
-        </Button>
-      </form>
-    </div>
+        </motion.div>
+      </div>
+    </main>
   );
 } 
