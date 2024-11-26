@@ -1,9 +1,13 @@
 // Função para verificar email usando Abstract API
+
+const apiKey = process.env.ABSTRACT_API_KEY;
+
 export async function verificarEmail(email: string) {
   try {
     const response = await fetch(
-      `https://emailvalidation.abstractapi.com/v1/?api_key=${process.env.ABSTRACT_API_KEY}&email=${email}`
+      `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`
     );
+  
     const data = await response.json();
     
     console.log('Resposta da API:', data); // Para debug
