@@ -10,7 +10,7 @@ import { toast } from 'react-hot-toast';
 import { gerarEmailCliente, gerarEmailAdmin } from "@/lib/email-templates";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check } from "lucide-react";
 import { ptBR } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -19,6 +19,73 @@ import { registerLocale } from "react-datepicker";
 
 // Registre o locale português
 registerLocale('pt-BR', ptBR);
+
+const SuccessAnimation = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+    >
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ 
+          type: "spring",
+          duration: 0.5,
+          bounce: 0.4
+        }}
+        className="bg-card p-8 rounded-2xl flex flex-col items-center gap-6 max-w-sm mx-4"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{
+            type: "spring",
+            delay: 0.2,
+            duration: 0.7,
+            bounce: 0.5
+          }}
+          className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Check className="w-10 h-10 text-white" />
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center space-y-2"
+        >
+          <h2 className="text-2xl font-bold">Orçamento Enviado!</h2>
+          <p className="text-muted-foreground">
+            Seu orçamento foi enviado com sucesso. Acompanhe o status do seu pedido.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="w-full"
+        >
+          <Button 
+            onClick={onClose}
+            className="w-full bg-green-500 hover:bg-green-600"
+          >
+            Ver Meus Pedidos
+          </Button>
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 export default function OrcamentoPage() {
   const router = useRouter();
@@ -42,6 +109,7 @@ export default function OrcamentoPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showEntregaPicker, setShowEntregaPicker] = useState(false);
   const [showRetiradaPicker, setShowRetiradaPicker] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -166,7 +234,7 @@ export default function OrcamentoPage() {
       // Se chegou aqui, deu tudo certo
       useCartStore.getState().clearCart();
       toast.success('Orçamento solicitado com sucesso!', { id: loadingToast });
-      router.push("/");
+      setShowSuccess(true);
 
     } catch (error: any) {
       console.error("Erro detalhado:", error);
@@ -289,6 +357,14 @@ export default function OrcamentoPage() {
 
   return (
     <main className="min-h-screen bg-background pt-24">
+      {showSuccess && (
+        <SuccessAnimation 
+          onClose={() => {
+            setShowSuccess(false);
+            router.push("/meus-pedidos");
+          }} 
+        />
+      )}
       <div className="container mx-auto px-4 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
