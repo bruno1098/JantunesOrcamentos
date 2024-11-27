@@ -1,30 +1,42 @@
-// Função para verificar email usando Abstract API
+// Função de debounce para limitar as chamadas
+let timeoutId: NodeJS.Timeout;
 
-export async function verificarEmail(email: string) {
-  try {
-    const response = await fetch('/api/verify-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-  
-    const data = await response.json();
+export async function verificarEmail(email: string): Promise<boolean> {
+  // Retorna uma Promise que será resolvida após o delay
+  return new Promise((resolve) => {
+    // Cancela o timeout anterior se existir
+    if (timeoutId) clearTimeout(timeoutId);
+
+    // Cria um novo timeout
+    timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/verify-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
     
-    if (!response.ok) {
-      console.warn("Erro na resposta da API:", data.error);
-      return false;
-    }
+        const data = await response.json();
+        
+        if (!response.ok) {
+          console.warn("Erro na resposta da API:", data.error);
+          resolve(false);
+          return;
+        }
 
-    return data.is_valid_format?.value === true && 
-           data.is_disposable_email?.value === false && 
-           data.deliverability === "DELIVERABLE";
-           
-  } catch (error) {
-    console.error("Erro ao verificar email:", error);
-    return false;
-  }
+        resolve(
+          data.is_valid_format?.value === true && 
+          data.is_disposable_email?.value === false && 
+          data.deliverability === "DELIVERABLE"
+        );
+      } catch (error) {
+        console.error("Erro ao verificar email:", error);
+        resolve(false);
+      }
+    }, 1000); // Espera 1 segundo entre as chamadas
+  });
 }
 
 // Função para enviar email usando SendGrid

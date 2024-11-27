@@ -10,10 +10,11 @@ import { toast } from 'react-hot-toast';
 import { gerarEmailCliente, gerarEmailAdmin } from "@/lib/email-templates";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function OrcamentoPage() {
   const router = useRouter();
-  const { items } = useCartStore();
+  const { items, updateItemQuantity } = useCartStore();
   const [email, setEmail] = useState("");
   const [nomeEvento, setNomeEvento] = useState("");
   const [localEvento, setLocalEvento] = useState("");
@@ -30,6 +31,7 @@ export default function OrcamentoPage() {
   const [emailValido, setEmailValido] = useState(true);
   const [verificandoEmail, setVerificandoEmail] = useState(false);
   const [formPreenchido, setFormPreenchido] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -37,7 +39,10 @@ export default function OrcamentoPage() {
   };
 
   const validarDataRetirada = (dataRetiradaSelecionada: string) => {
-    if (dataEntrega && dataRetiradaSelecionada < dataEntrega) {
+    const dataEntregaObj = new Date(dataEntrega);
+    const dataRetiradaObj = new Date(dataRetiradaSelecionada);
+    
+    if (dataEntrega && dataRetiradaObj < dataEntregaObj) {
       alert("A data de retirada não pode ser anterior à data de entrega");
       setDataRetirada(dataEntrega);
       return;
@@ -54,7 +59,8 @@ export default function OrcamentoPage() {
           setEmailValido(valido);
         } catch (error) {
           console.error('Erro na verificação:', error);
-          setEmailValido(false);
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          setEmailValido(emailRegex.test(emailToCheck));
         } finally {
           setVerificandoEmail(false);
         }
@@ -174,6 +180,65 @@ export default function OrcamentoPage() {
         console.error("Erro ao buscar CEP:", error);
       }
     }
+  };
+
+  const handleEditQuantity = (itemId: string) => {
+    setEditingId(itemId);
+  };
+
+  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    if (newQuantity > 0) {
+      updateItemQuantity(itemId, newQuantity);
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    setEditingId(null);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    toast((t) => (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="bg-neutral-800 p-8 rounded-xl border border-neutral-700 shadow-2xl min-w-[400px]">
+          <div className="flex flex-col items-center gap-6">
+            <span className="text-xl font-medium text-white text-center">
+              Deseja remover este item?
+            </span>
+            <div className="flex gap-4 w-full">
+              <Button
+                variant="destructive"
+                size="lg"
+                onClick={() => {
+                  useCartStore.getState().removeItem(itemId);
+                  toast.dismiss(t.id);
+                }}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              >
+                Sim
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => toast.dismiss(t.id)}
+                className="flex-1 border-neutral-600 text-white hover:bg-neutral-700"
+              >
+                Não
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+      position: 'top-center',
+      style: {
+        background: 'transparent',
+        padding: 0,
+        maxWidth: '100vw',
+        width: '100%',
+        height: '100vh'
+      },
+    });
   };
 
   return (
@@ -299,7 +364,17 @@ export default function OrcamentoPage() {
                       required 
                       value={dataRetirada}
                       min={dataEntrega || getDataMinima()}
-                      onChange={(e) => validarDataRetirada(e.target.value)}
+                      onChange={(e) => {
+                        const novaDataRetirada = e.target.value;
+                        const dataEntregaObj = new Date(dataEntrega);
+                        const dataRetiradaObj = new Date(novaDataRetirada);
+                        
+                        if (dataEntrega && dataRetiradaObj < dataEntregaObj) {
+                          setDataRetirada(dataEntrega);
+                        } else {
+                          setDataRetirada(novaDataRetirada);
+                        }
+                      }}
                       className="w-full p-2 border rounded"
                     />
                   </div>
@@ -333,9 +408,34 @@ export default function OrcamentoPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Quantidade: {item.quantity}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Quantidade:</span>
+                        {editingId === item.id ? (
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
+                            onBlur={handleQuantityBlur}
+                            autoFocus
+                            className="w-16 p-1 text-sm border rounded"
+                          />
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{item.quantity}</span>
+                        )}
+                        <button
+                          onClick={() => handleEditQuantity(item.id)}
+                          className="p-1 hover:bg-primary/10 rounded"
+                        >
+                          <Pencil size={18} className="text-blue-500" />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="p-1 hover:bg-primary/10 rounded"
+                        >
+                          <Trash2 size={18} className="text-red-500" />
+                        </button>
+                      </div>
                       {item.observation && (
                         <p className="text-sm text-muted-foreground">
                           Obs: {item.observation}
@@ -356,7 +456,7 @@ export default function OrcamentoPage() {
               onClick={handleSubmit}
               disabled={!formPreenchido}
             >
-              {formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos'}
+              {formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos para enviar o orçamento'}
             </Button>
           </div>
         </motion.div>
