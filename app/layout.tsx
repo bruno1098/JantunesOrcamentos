@@ -6,6 +6,7 @@ import { Navigation } from '@/components/navigation';
 import { Footer } from '@/components/footer';
 import { Toaster } from 'react-hot-toast';
 import { ModalProvider } from '@/components/modal-provider';
+import { CartHydration } from "@/components/providers/cart-hydration";
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -33,7 +34,9 @@ export default function RootLayout({
         >
           <ModalProvider />
           <Navigation />
-          <main>{children}</main>
+          <CartHydration>
+            <main>{children}</main>
+          </CartHydration>
           <Footer />
           <Toaster position="top-right" />
         </ThemeProvider>
