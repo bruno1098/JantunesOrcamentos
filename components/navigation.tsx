@@ -15,6 +15,7 @@ export function Navigation() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const items = useCartStore((state) => state.items);
+  const [isCartBouncing, setIsCartBouncing] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +25,45 @@ export function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (items.length > 0) {
+      setIsCartBouncing(true);
+      setTimeout(() => setIsCartBouncing(false), 500);
+    }
+  }, [items.length]);
+
+  const CartButton = ({ isMobile = false }) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`relative ${isMobile ? '' : 'hidden md:flex'}`}
+      onClick={() => setIsCartOpen(true)}
+      data-cart-icon
+    >
+      <motion.div
+        animate={isCartBouncing ? {
+          scale: [1, 1.2, 0.9, 1.1, 1],
+          rotate: [0, -10, 10, -5, 0],
+        } : {}}
+        transition={{
+          duration: 0.5,
+          ease: "easeInOut",
+        }}
+      >
+        <ShoppingCart className="h-5 w-5" />
+        {items.length > 0 && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center"
+          >
+            {items.length}
+          </motion.span>
+        )}
+      </motion.div>
+    </Button>
+  );
 
   return (
     <>
@@ -68,36 +108,12 @@ export function Navigation() {
                 <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {items.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center">
-                    {items.length}
-                  </span>
-                )}
-              </Button>
+              <CartButton />
             </div>
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {items.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center">
-                    {items.length}
-                  </span>
-                )}
-              </Button>
+              <CartButton isMobile />
               <Button
                 variant="ghost"
                 size="icon"

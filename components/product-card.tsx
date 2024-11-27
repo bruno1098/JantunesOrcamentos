@@ -1,14 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Product } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useCartStore } from "@/store/cart-store";
 import { ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Modal from "react-modal";
+import { getCartIconPosition } from "@/utils/dom-utils";
 
 interface ProductCardProps {
   product: Product;
@@ -21,22 +22,70 @@ export function ProductCard({ product, index }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [observation, setObservation] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationPosition, setAnimationPosition] = useState({ x: 0, y: 0 });
+  const [elementPosition, setElementPosition] = useState({ left: 0, top: 0 });
+  const productRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
-    // Simulate loading
     await new Promise((resolve) => setTimeout(resolve, 500));
     addItem({ ...product, quantity, observation });
     setIsAdding(false);
     setIsModalOpen(false);
-    // Reset fields
+    
     setQuantity(1);
     setObservation("");
+
+    const productElement = productRef.current;
+    if (!productElement) return;
+
+    const productRect = productElement.getBoundingClientRect();
+    const cartPosition = getCartIconPosition();
+    
+    setElementPosition({
+      left: isMobile ? 
+        productRect.left + (productRect.width / 2) - 15 :
+        productRect.left + (productRect.width / 2) - 15,
+      top: isMobile ? 
+        productRect.top + (productRect.height / 2) - 15 :
+        productRect.top + (productRect.height / 2) - 15
+    });
+    
+    const targetX = cartPosition.x - (productRect.left + productRect.width / 2);
+    const targetY = cartPosition.y - (productRect.top + productRect.height / 2);
+
+    setAnimationPosition({
+      x: targetX,
+      y: targetY
+    });
+
+    setShowModal(false);
+    setTimeout(() => {
+      setShowAnimation(true);
+      setTimeout(() => {
+        setShowAnimation(false);
+      }, 1200);
+    }, 300);
   };
 
   return (
     <>
       <motion.div
+        ref={productRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -74,6 +123,73 @@ export function ProductCard({ product, index }: ProductCardProps) {
           </CardFooter>
         </Card>
       </motion.div>
+
+      <AnimatePresence>
+        {showAnimation && (
+          <motion.div
+            initial={{ 
+              opacity: 1,
+              scale: 1,
+              x: 0,
+              y: 0
+            }}
+            animate={{ 
+              opacity: 0,
+              scale: 0.5,
+              x: animationPosition.x,
+              y: animationPosition.y
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              duration: 1.2,
+              ease: isMobile ? [0.2, 0, 0.4, 1] : [0.4, 0, 0.2, 1],
+              type: "tween"
+            }}
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: elementPosition.left,
+              top: elementPosition.top,
+              width: isMobile ? "30px" : "40px",
+              height: isMobile ? "30px" : "40px",
+            }}
+          >
+            <motion.div
+              className="w-full h-full relative"
+              animate={{
+                scaleX: [1, 1.2, 0.8, 1],
+                scaleY: [1, 0.8, 1.2, 1],
+              }}
+              transition={{
+                duration: 0.6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <div className="absolute inset-0 bg-primary/30 rounded-full blur-sm" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
+              <motion.div
+                className="absolute inset-0 rounded-full overflow-hidden"
+                animate={{
+                  borderRadius: ["50%", "40% 60% 70% 30%", "40% 60%"],
+                }}
+                transition={{
+                  duration: 0.6,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover scale-150 opacity-70"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent mix-blend-overlay" />
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Modal
         isOpen={isModalOpen}
