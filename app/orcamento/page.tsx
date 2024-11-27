@@ -54,8 +54,7 @@ export default function OrcamentoPage() {
           setEmailValido(valido);
         } catch (error) {
           console.error('Erro na verificação:', error);
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          setEmailValido(emailRegex.test(emailToCheck));
+          setEmailValido(false);
         } finally {
           setVerificandoEmail(false);
         }

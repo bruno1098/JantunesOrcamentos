@@ -4,12 +4,9 @@ const apiKey = process.env.ABSTRACT_API_KEY;
 
 export async function verificarEmail(email: string) {
   try {
-    // Verifica se a chave da API existe
     if (!apiKey) {
       console.warn("Chave da API Abstract não configurada");
-      // Fallback para validação básica
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
+      return false; // Retorna falso se não houver chave API
     }
 
     const response = await fetch(
@@ -18,22 +15,19 @@ export async function verificarEmail(email: string) {
   
     const data = await response.json();
     
-    // Verifica se há erro na resposta
     if (data.error) {
       console.warn("Erro na resposta da API Abstract:", data.error);
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
+      return false;
     }
 
-    return data.is_valid_format?.value && 
-           !data.is_disposable_email?.value && 
+    // Retorna true apenas se todas as condições forem verdadeiras
+    return data.is_valid_format?.value === true && 
+           data.is_disposable_email?.value === false && 
            data.deliverability === "DELIVERABLE";
            
   } catch (error) {
     console.error("Erro ao verificar email:", error);
-    // Em caso de erro na API, vamos considerar válido se tiver formato básico de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return false; // Retorna falso em caso de erro
   }
 }
 
