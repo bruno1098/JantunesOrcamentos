@@ -1,8 +1,22 @@
 "use client";
 
 import { AbsoluteFill, interpolate, useCurrentFrame, Easing } from "remotion";
+import { useState, useEffect } from "react";
 
-export const HeroAnimation = ({ theme }: { theme: string }) => {
+export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string, width: number }) => {
+  const [currentWidth, setCurrentWidth] = useState(initialWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCurrentWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Set initial width
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const frame = useCurrentFrame();
 
   const isDark = theme === "dark";
@@ -56,31 +70,51 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
     easing: Easing.out(Easing.ease),
   });
 
+  // Função para calcular tamanhos responsivos
+  const getTitleSize = () => {
+    if (currentWidth <= 768) {
+      return 'clamp(16rem, 35vw, 20rem)';
+    }
+    return 'clamp(15rem, 15vw, 10rem)';
+  };
+
+  const getSubtitleSize = () => {
+    if (currentWidth <= 768) {
+      return 'clamp(5rem, 8vw, 5rem)';
+    }
+    return 'clamp(0.3rem, 5vw, 2.5rem)';
+  };
+
+  
+
   return (
     <AbsoluteFill
-    style={{
-      background: `linear-gradient(${gradientProgress}deg, ${gradientColors[0]}, ${gradientColors[1]})`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center", // Centraliza verticalmente
-      flexDirection: "column",
-    }}
-  >
- 
-  
-      {/* Container principal */}
+      style={{
+        background: `linear-gradient(${gradientProgress}deg, ${gradientColors[0]}, ${gradientColors[1]})`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        overflow: "visible",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Container principal - Aqui está a div que precisamos ajustar */}
       <div
         style={{
           width: "100%",
-          maxWidth: "90vw",
+          maxWidth: currentWidth <= 768 ? "900vw" : "90vw", // Ajuste dinâmico baseado na largura
+          height: "auto",
+          padding: currentWidth <= 768 ? "4rem 1rem" : "1rem",
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: "1rem",
+          gap: currentWidth <= 768 ? "3rem" : "1rem",
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
           zIndex: 2,
+          overflow: "visible",
         }}
       >
         {/* Título */}
@@ -90,11 +124,12 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
             transform: `scale(${titleScale})`,
             textAlign: "center",
             width: "100%",
+            marginBottom: currentWidth <= 768 ? "2rem" : "1rem",
           }}
         >
           <h1
             style={{
-              fontSize: 'clamp(5rem, 13vw, 10rem)', // Ajuste mais simples para mobile
+              fontSize: getTitleSize(),
               fontWeight: "bold",
               background: `linear-gradient(to right, ${textGradientColors[0]}, ${textGradientColors[1]}, ${textGradientColors[2]})`,
               backgroundSize: "200% 100%",
@@ -103,9 +138,8 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
               backgroundClip: "text",
               WebkitTextFillColor: "transparent",
               margin: 0,
-              padding: "0.5rem",
-              lineHeight: 1.2,
-           
+              padding: currentWidth <= 768 ? "1rem" : "0.5rem",
+              lineHeight: 1.1,
             }}
           >
             J.Antunes
@@ -115,7 +149,6 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
         {/* Subtítulo */}
         <div
           style={{
-            fontSize: 'clamp(5rem, 12vw, 4.5rem)',
             opacity: subtitleOpacity,
             transform: `translateY(${subtitleY}px)`,
             textAlign: "center",
@@ -124,7 +157,7 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
         >
           <p
             style={{
-              fontSize: "min(4.5vw, 1.2rem)", // Ajuste mais simples para mobile
+              fontSize: getSubtitleSize(),
               background: `linear-gradient(to right, ${textGradientColors[0]}, ${textGradientColors[1]}, ${textGradientColors[2]})`,
               backgroundSize: "200% 100%",
               backgroundPosition: `${titleGradientPosition}% 0`,
@@ -132,9 +165,9 @@ export const HeroAnimation = ({ theme }: { theme: string }) => {
               backgroundClip: "text",
               WebkitTextFillColor: "transparent",
               margin: "0 auto",
-              maxWidth: "min(90%, 500px)",
-              lineHeight: 1.5,
-              padding: "0 0.5rem",
+              maxWidth: currentWidth <= 768 ? "100%" : "min(95%, 800px)",
+              lineHeight: currentWidth <= 768 ? 1.3 : 1.4,
+              padding: currentWidth <= 768 ? "0 0.5rem" : "0 1rem",
             }}
           >
             Elegância em cada detalhe. Transformando momentos especiais com nossa

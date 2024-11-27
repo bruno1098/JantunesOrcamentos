@@ -33,14 +33,14 @@ export default function Home() {
       if (aspectRatio < baseWidth / baseHeight) {
         // Tela mais alta que a composição
         setCompositionSize({
-          width: baseWidth,
-          height: baseWidth / aspectRatio,
+          width: Math.round(baseWidth),
+          height: Math.round(baseWidth / aspectRatio),
         });
       } else {
         // Tela mais larga ou igual à composição
         setCompositionSize({
-          width: baseHeight * aspectRatio,
-          height: baseHeight,
+          width: Math.round(baseHeight * aspectRatio),
+          height: Math.round(baseHeight),
         });
       }
     };
@@ -53,7 +53,7 @@ export default function Home() {
     };
   }, []);
   return (
-    <div className="w-full">
+    <div className="w-full overflow-x-hidden">
       <WhatsAppButton />
       {/* Seção Hero */}
     
@@ -62,29 +62,30 @@ export default function Home() {
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   transition={{ duration: 1 }}
-  className="relative h-screen w-full flex items-center justify-center overflow-hidden"
+  className="relative h-[100svh] w-full flex items-center justify-center overflow-hidden"
   >
-  <div className="absolute inset-0 w-full h-full overflow-hidden">
   <div className="absolute inset-0">
   <Player
   component={HeroAnimation}
   durationInFrames={300}
-  compositionWidth={1920}
-  compositionHeight={1080}
+  compositionWidth={compositionSize.width}
+  compositionHeight={compositionSize.height}
   fps={30}
   style={{
     width: '100%',
     height: '100%',
+    objectFit: 'cover',
   }}
   loop
   autoPlay
 
-  inputProps={{ theme: theme || '' }}
+  inputProps={{ 
+    theme: theme || '',
+    width: window.innerWidth
+  }}
 />
 
   </div>
-</div>
-
 </motion.section>
 
 
