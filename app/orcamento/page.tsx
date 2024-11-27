@@ -11,6 +11,14 @@ import { gerarEmailCliente, gerarEmailAdmin } from "@/lib/email-templates";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Pencil, Trash2 } from "lucide-react";
+import { ptBR } from 'date-fns/locale';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format } from 'date-fns';
+import { registerLocale } from "react-datepicker";
+
+// Registre o locale português
+registerLocale('pt-BR', ptBR);
 
 export default function OrcamentoPage() {
   const router = useRouter();
@@ -26,28 +34,31 @@ export default function OrcamentoPage() {
     cidade: "",
     estado: "",
   });
-  const [dataEntrega, setDataEntrega] = useState("");
-  const [dataRetirada, setDataRetirada] = useState("");
+  const [dataEntrega, setDataEntrega] = useState<Date | undefined>(undefined);
+  const [dataRetirada, setDataRetirada] = useState<Date | undefined>(undefined);
   const [emailValido, setEmailValido] = useState(true);
   const [verificandoEmail, setVerificandoEmail] = useState(false);
   const [formPreenchido, setFormPreenchido] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showEntregaPicker, setShowEntregaPicker] = useState(false);
+  const [showRetiradaPicker, setShowRetiradaPicker] = useState(false);
 
   const getDataMinima = () => {
     const hoje = new Date();
-    return hoje.toISOString().split('T')[0];
+    hoje.setHours(0, 0, 0, 0);
+    return hoje;
   };
 
   const validarDataRetirada = (dataRetiradaSelecionada: string) => {
-    const dataEntregaObj = new Date(dataEntrega);
+    const dataEntregaObj = dataEntrega ? new Date(dataEntrega) : null;
     const dataRetiradaObj = new Date(dataRetiradaSelecionada);
     
-    if (dataEntrega && dataRetiradaObj < dataEntregaObj) {
+    if (dataEntregaObj && dataRetiradaObj < dataEntregaObj) {
       alert("A data de retirada não pode ser anterior à data de entrega");
-      setDataRetirada(dataEntrega);
+      setDataRetirada(dataEntregaObj);
       return;
     }
-    setDataRetirada(dataRetiradaSelecionada);
+    setDataRetirada(dataRetiradaObj);
   };
 
   const verificarEmailDebounced = useCallback((email: string) => {
@@ -80,8 +91,8 @@ export default function OrcamentoPage() {
       endereco.bairro !== "" &&
       endereco.cidade !== "" &&
       endereco.estado !== "" &&
-      dataEntrega !== "" &&
-      dataRetirada !== "" &&
+      dataEntrega !== null &&
+      dataRetirada !== null &&
       items.length > 0;
 
     setFormPreenchido(camposPreenchidos);
@@ -123,8 +134,8 @@ export default function OrcamentoPage() {
           cep,
           ...endereco
         },
-        dataEntrega,
-        dataRetirada,
+        dataEntrega: dataEntrega ? format(dataEntrega, 'yyyy-MM-dd') : '',
+        dataRetirada: dataRetirada ? format(dataRetirada, 'yyyy-MM-dd') : '',
         itens: items,
         mensagem,
         status: "Pendente"
@@ -241,6 +252,41 @@ export default function OrcamentoPage() {
     });
   };
 
+  const css = `
+    .rdp {
+      --rdp-cell-size: 40px;
+      --rdp-accent-color: hsl(var(--primary));
+      --rdp-background-color: hsl(var(--primary) / 0.2);
+      margin: 0;
+    }
+    .rdp-day_selected:not([disabled]) { 
+      background-color: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+    .rdp-day_selected:hover:not([disabled]) { 
+      background-color: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+    .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+      background-color: hsl(var(--primary) / 0.1);
+    }
+  `;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showEntregaPicker || showRetiradaPicker) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.rdp')) {
+          setShowEntregaPicker(false);
+          setShowRetiradaPicker(false);
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEntregaPicker, showRetiradaPicker]);
+
   return (
     <main className="min-h-screen bg-background pt-24">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -342,41 +388,122 @@ export default function OrcamentoPage() {
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
+                    <style>{css}</style>
                     <label className="block mb-2">Data de Entrega:</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={dataEntrega}
-                      min={getDataMinima()}
-                      onChange={(e) => {
-                        setDataEntrega(e.target.value);
-                        if (dataRetirada && dataRetirada < e.target.value) {
-                          setDataRetirada(e.target.value);
-                        }
-                      }}
-                      className="w-full p-2 border rounded"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={dataEntrega ? format(dataEntrega, 'dd/MM/yyyy') : ''}
+                        readOnly
+                        placeholder="Selecione a data"
+                        className="w-full p-2 border rounded cursor-pointer"
+                        onClick={() => setShowEntregaPicker(true)}
+                      />
+                      {showEntregaPicker && (
+                        <div className="absolute z-50 mt-1 bg-popover border rounded-md shadow-md">
+                          <DayPicker
+                            mode="single"
+                            selected={dataEntrega}
+                            onSelect={(date: Date | undefined) => {
+                              if (date) {
+                                if (date < getDataMinima()) {
+                                  toast.error("A data de entrega não pode ser anterior a hoje");
+                                  return;
+                                }
+                                setDataEntrega(date);
+                                if (dataRetirada && dataRetirada < date) {
+                                  setDataRetirada(date);
+                                  toast("A data de retirada foi ajustada");
+                                }
+                              }
+                              setShowEntregaPicker(false);
+                            }}
+                            locale={ptBR}
+                            fromDate={getDataMinima()}
+                            className="bg-popover p-3"
+                            classNames={{
+                              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                              month: "space-y-4",
+                              caption: "flex justify-center pt-1 relative items-center",
+                              caption_label: "text-sm font-medium",
+                              nav: "space-x-1 flex items-center",
+                              nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                              nav_button_previous: "absolute left-1",
+                              nav_button_next: "absolute right-1",
+                              table: "w-full border-collapse space-y-1",
+                              head_row: "flex",
+                              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                              row: "flex w-full mt-2",
+                              cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                              day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                              day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                              day_today: "bg-accent text-accent-foreground",
+                              day_outside: "text-muted-foreground opacity-50",
+                              day_disabled: "text-muted-foreground opacity-50",
+                              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                              day_hidden: "invisible",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
+
                   <div>
                     <label className="block mb-2">Data de Retirada:</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={dataRetirada}
-                      min={dataEntrega || getDataMinima()}
-                      onChange={(e) => {
-                        const novaDataRetirada = e.target.value;
-                        const dataEntregaObj = new Date(dataEntrega);
-                        const dataRetiradaObj = new Date(novaDataRetirada);
-                        
-                        if (dataEntrega && dataRetiradaObj < dataEntregaObj) {
-                          setDataRetirada(dataEntrega);
-                        } else {
-                          setDataRetirada(novaDataRetirada);
-                        }
-                      }}
-                      className="w-full p-2 border rounded"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={dataRetirada ? format(dataRetirada, 'dd/MM/yyyy') : ''}
+                        readOnly
+                        placeholder="Selecione a data"
+                        className="w-full p-2 border rounded cursor-pointer"
+                        onClick={() => setShowRetiradaPicker(true)}
+                      />
+                      {showRetiradaPicker && (
+                        <div className="absolute z-50 mt-1 bg-popover border rounded-md shadow-md">
+                          <DayPicker
+                            mode="single"
+                            selected={dataRetirada}
+                            onSelect={(date: Date | undefined) => {
+                              if (date) {
+                                if (dataEntrega && date < dataEntrega) {
+                                  toast.error("A data de retirada não pode ser anterior à data de entrega");
+                                  return;
+                                }
+                                setDataRetirada(date);
+                              }
+                              setShowRetiradaPicker(false);
+                            }}
+                            locale={ptBR}
+                            fromDate={dataEntrega || getDataMinima()}
+                            className="bg-popover p-3"
+                            classNames={{
+                              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                              month: "space-y-4",
+                              caption: "flex justify-center pt-1 relative items-center",
+                              caption_label: "text-sm font-medium",
+                              nav: "space-x-1 flex items-center",
+                              nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                              nav_button_previous: "absolute left-1",
+                              nav_button_next: "absolute right-1",
+                              table: "w-full border-collapse space-y-1",
+                              head_row: "flex",
+                              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                              row: "flex w-full mt-2",
+                              cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                              day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                              day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                              day_today: "bg-accent text-accent-foreground",
+                              day_outside: "text-muted-foreground opacity-50",
+                              day_disabled: "text-muted-foreground opacity-50",
+                              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                              day_hidden: "invisible",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
