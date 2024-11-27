@@ -10,6 +10,7 @@ import { ShoppingCart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Modal from "react-modal";
 import { getCartIconPosition } from "@/utils/dom-utils";
+import { X } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -81,6 +82,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
       }, 1200);
     }, 300);
   };
+  const [showFullImage, setShowFullImage] = useState(false);
 
   return (
     <>
@@ -90,8 +92,8 @@ export function ProductCard({ product, index }: ProductCardProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
       >
-        <Card className="overflow-hidden group">
-          <div className="relative h-64 overflow-hidden">
+        <Card className="overflow-hidden group h-full flex flex-col">
+          <div className="relative h-48 sm:h-64 overflow-hidden">
             <Image
               src={product.image}
               alt={product.name}
@@ -99,15 +101,15 @@ export function ProductCard({ product, index }: ProductCardProps) {
               className="object-cover transition-transform duration-300 group-hover:scale-110"
             />
           </div>
-          <CardContent className="p-6">
-            <h3 className="text-xl font-bold mb-2">{product.name}</h3>
-            <p className="text-neutral-600 dark:text-neutral-300">
+          <CardContent className="p-3 sm:p-6 flex-grow">
+            <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-2">{product.name}</h3>
+            <p className="text-neutral-600 dark:text-neutral-300 text-sm sm:text-base line-clamp-3">
               {product.description}
             </p>
           </CardContent>
-          <CardFooter className="p-6 pt-0">
+          <CardFooter className="p-3 sm:p-6 pt-0">
             <Button 
-              className="w-full"
+              className="w-full text-sm sm:text-base py-2"
               onClick={() => setIsModalOpen(true)}
               disabled={isAdding}
             >
@@ -115,8 +117,8 @@ export function ProductCard({ product, index }: ProductCardProps) {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Adicionar ao Carrinho
+                  <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Adicionar ao Carrinho</span>
                 </>
               )}
             </Button>
@@ -195,17 +197,25 @@ export function ProductCard({ product, index }: ProductCardProps) {
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         contentLabel="Adicionar ao Carrinho"
-        className="modal bg-white dark:bg-neutral-900 p-6 rounded-lg max-w-md w-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg border border-neutral-200 dark:border-neutral-700"
-        overlayClassName="modal-overlay fixed inset-0 bg-neutral-800/75 flex items-center justify-center backdrop-blur-sm"
+        className="modal fixed bg-background text-foreground p-4 md:p-6 rounded-lg w-[95%] md:max-w-md absolute top-[5%] md:top-1/2 left-1/2 transform -translate-x-1/2 md:-translate-y-1/2 shadow-lg border border-neutral-200 dark:border-neutral-700 max-h-[90vh] overflow-y-auto"
+        overlayClassName="modal-overlay fixed inset-0 bg-black/75 flex items-start md:items-center justify-center backdrop-blur-sm"
       >
-        <div className="flex items-start gap-4 mb-6">
-          <div className="relative w-24 h-24 flex-shrink-0">
+        <div className="flex flex-col items-start gap-4 mb-6">
+          <div 
+            className="relative w-full h-48 md:h-64 flex-shrink-0 cursor-zoom-in group"
+            onClick={() => setShowFullImage(true)}
+          >
             <Image
               src={product.image}
               alt={product.name}
               fill
               className="object-cover rounded-md"
             />
+            <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity bg-black/20 rounded-md`}>
+              <p className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                Clique para ampliar
+              </p>
+            </div>
           </div>
           <div>
             <h2 className="text-2xl font-bold mb-1">{product.name}</h2>
@@ -219,6 +229,8 @@ export function ProductCard({ product, index }: ProductCardProps) {
           <label className="block mb-2">Quantidade:</label>
           <input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             min="1"
             value={quantity}
             onChange={(e) => setQuantity(parseInt(e.target.value))}
@@ -245,6 +257,32 @@ export function ProductCard({ product, index }: ProductCardProps) {
               "Adicionar"
             )}
           </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showFullImage}
+        onRequestClose={() => setShowFullImage(false)}
+        className="modal fixed inset-0 bg-black/95 flex items-center justify-center p-4"
+        overlayClassName="modal-overlay"
+      >
+        <div className="relative w-full h-full flex items-center justify-center">
+          <button
+            onClick={() => setShowFullImage(false)}
+            className="absolute top-4 right-4 text-white z-10 p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 80vw"
+              priority
+            />
+          </div>
         </div>
       </Modal>
     </>
