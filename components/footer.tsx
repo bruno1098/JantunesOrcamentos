@@ -40,13 +40,13 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#contact" className="text-neutral-400 hover:text-white transition-colors">
+                <a href="/contato" className="text-neutral-400 hover:text-white transition-colors">
                   Contato
                 </a>
               </li>
               <li>
-                <a href="#faq" className="text-neutral-400 hover:text-white transition-colors">
-                  FAQ
+                <a href="/duvidas-frequentes" className="text-neutral-400 hover:text-white transition-colors">
+                  Dúvidas Frequentes
                 </a>
               </li>
             </ul>

@@ -11,7 +11,7 @@ import { enviarEmail } from "@/lib/email-utils";
 import { toast } from "react-hot-toast";
 import { FaWhatsapp } from "react-icons/fa";
 
-export function Contact() {
+export default function Contact() {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -122,6 +122,7 @@ export function Contact() {
                 </p>
               </div>
             </div>
+
             <div className="flex items-start space-x-4">
               <FaWhatsapp className="w-6 h-6 mt-1 text-primary" />
               <div>
@@ -137,7 +138,6 @@ export function Contact() {
                 </Button>
               </div>
             </div>
-
           </motion.div>
 
           <motion.form
