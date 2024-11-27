@@ -5,15 +5,13 @@ import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 
 export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; width: number }) => {
-  const [currentWidth, setCurrentWidth] = useState(initialWidth);
   const [isMobile, setIsMobile] = useState(false);
-  const [gradientKey, setGradientKey] = useState(0); // Para forçar repintura no gradiente
+  const [gradientKey, setGradientKey] = useState(0);
   const toalhaRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setCurrentWidth(width);
       setIsMobile(width <= 768);
     };
 
@@ -23,14 +21,8 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Atualiza o gradiente ao mudar de tema
-  useEffect(() => {
-    setGradientKey((prev) => prev + 1);
-  }, [theme]);
-
   useEffect(() => {
     if (toalhaRef.current) {
-      // Configuração inicial
       gsap.set(toalhaRef.current, {
         scaleY: 0.3,
         scaleX: 0.8,
@@ -40,7 +32,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
         y: -50
       });
 
-      // Timeline para sequência de animações mais naturais
       const tl = gsap.timeline({
         defaults: { ease: "power2.out" }
       });
@@ -67,7 +58,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
         ease: "power1.inOut"
       }, "-=0.4");
 
-      // Adiciona um leve movimento de balanço
       gsap.to(toalhaRef.current, {
         rotation: -2,
         duration: 2,
@@ -84,8 +74,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
   const gradientColors = isDark
     ? ["#1a1a1a", "#2a2a2a"]
     : ["#ffffff", "#e0e0e0"];
-
-  const lineColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
 
   const gradientProgress = interpolate(
     frame,
@@ -134,40 +122,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
       easing: Easing.out(Easing.quad),
     }
   );
-
-  // Animações para a toalha
-  const towelTransformX = interpolate(
-    frame,
-    [40, 80],
-    [-100, 0], // Movimento horizontal da esquerda para a posição final
-    {
-      extrapolateRight: "clamp",
-      easing: Easing.out(Easing.cubic),
-    }
-  );
-
-  const towelTransformY = interpolate(
-    frame,
-    [40, 80],
-    [-50, 0], // Movimento vertical para criar a diagonal
-    {
-      extrapolateRight: "clamp",
-      easing: Easing.out(Easing.cubic),
-    }
-  );
-
-  const towelOpacity = interpolate(
-    frame,
-    [40, 60],
-    [0, 1],
-    {
-      extrapolateRight: "clamp",
-    }
-  );
-
-  // Cores da toalha baseadas no tema
-  const towelColor = isDark ? "#b22222" : "#FF6347"; // Tom de vermelho mais natural
-  const towelBorder = isDark ? "#8b0000" : "#CC4500";
 
   const getTitleSize = () => {
     if (isMobile) {
@@ -242,7 +196,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
         }}
       >
         <div style={{ position: "relative" }}>
-          {/* SVG da toalha mais orgânico */}
           <svg
             ref={toalhaRef}
             width="200"
@@ -272,7 +225,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
               </linearGradient>
             </defs>
 
-            {/* Forma principal com cantos mais naturais */}
             <path 
               d="M40,50 
                  C45,45 55,40 70,45
@@ -296,7 +248,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
               filter="drop-shadow(3px 3px 5px rgba(0,0,0,0.2))"
             />
 
-            {/* Ondulações em U mais pronunciadas */}
             <path
               d="M35,210
                  Q45,200 55,210
@@ -342,7 +293,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
               opacity="0.6"
             />
 
-            {/* Dobras verticais suaves */}
             <path
               d="M70,60
                  C73,90 73,120 70,150
@@ -373,7 +323,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
               opacity="0.3"
             />
 
-            {/* Dobras horizontais suaves */}
             <path
               d="M40,100
                  C960,95 100,95 140,100
@@ -396,7 +345,6 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
           </svg>
           
 
-          {/* Título existente */}
           <div
             style={{
               opacity: titleOpacity,
@@ -425,7 +373,7 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
           }}
         >
           <p
-            key={gradientKey} // Força recriação do elemento para repintura
+            key={gradientKey}
             style={pStyle}
           >
             Elegância em cada detalhe. Transformando momentos especiais com nossa
