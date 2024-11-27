@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,7 @@ export default function OrcamentoPage() {
   const [dataRetirada, setDataRetirada] = useState("");
   const [emailValido, setEmailValido] = useState(true);
   const [verificandoEmail, setVerificandoEmail] = useState(false);
+  const [formPreenchido, setFormPreenchido] = useState(false);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -64,6 +65,23 @@ export default function OrcamentoPage() {
     debouncedCheck(email);
   }, []);
 
+  const verificarCamposPreenchidos = useCallback(() => {
+    const camposPreenchidos = 
+      email !== "" &&
+      emailValido &&
+      nomeEvento !== "" &&
+      cep !== "" &&
+      endereco.rua !== "" &&
+      endereco.bairro !== "" &&
+      endereco.cidade !== "" &&
+      endereco.estado !== "" &&
+      dataEntrega !== "" &&
+      dataRetirada !== "" &&
+      items.length > 0;
+
+    setFormPreenchido(camposPreenchidos);
+  }, [email, emailValido, nomeEvento, cep, endereco, dataEntrega, dataRetirada, items]);
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const novoEmail = e.target.value;
     setEmail(novoEmail);
@@ -73,7 +91,12 @@ export default function OrcamentoPage() {
     } else {
       setEmailValido(true);
     }
+    verificarCamposPreenchidos();
   };
+
+  useEffect(() => {
+    verificarCamposPreenchidos();
+  }, [email, nomeEvento, cep, endereco, dataEntrega, dataRetirada, verificarCamposPreenchidos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +200,9 @@ export default function OrcamentoPage() {
                       required 
                       value={email}
                       onChange={handleEmailChange}
-                      className="w-full p-2 border rounded"
+                      className={`w-full p-2 border rounded ${
+                        email && (emailValido ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50')
+                      }`}
                     />
                     {verificandoEmail && (
                       <span className="absolute right-2 top-2 text-sm text-gray-500">
@@ -328,8 +353,9 @@ export default function OrcamentoPage() {
               type="submit" 
               className="w-full"
               onClick={handleSubmit}
+              disabled={!formPreenchido}
             >
-              Enviar Orçamento
+              {formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos'}
             </Button>
           </div>
         </motion.div>
