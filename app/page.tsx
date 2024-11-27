@@ -81,7 +81,7 @@ export default function Home() {
 
   inputProps={{ 
     theme: theme || '',
-    width: window.innerWidth
+    width: 1920
   }}
 />
 

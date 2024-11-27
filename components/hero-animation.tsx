@@ -5,14 +5,18 @@ import { useState, useEffect } from "react";
 
 export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string, width: number }) => {
   const [currentWidth, setCurrentWidth] = useState(initialWidth);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Só executa no cliente
     const handleResize = () => {
-      setCurrentWidth(window.innerWidth);
+      const width = window.innerWidth;
+      setCurrentWidth(width);
+      setIsMobile(width <= 768);
     };
 
+    handleResize(); // Configuração inicial
     window.addEventListener('resize', handleResize);
-    handleResize(); // Set initial width
 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -72,14 +76,14 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string, w
 
   // Função para calcular tamanhos responsivos
   const getTitleSize = () => {
-    if (currentWidth <= 768) {
+    if (isMobile) {
       return 'clamp(16rem, 35vw, 20rem)';
     }
     return 'clamp(15rem, 15vw, 10rem)';
   };
 
   const getSubtitleSize = () => {
-    if (currentWidth <= 768) {
+    if (isMobile) {
       return 'clamp(5rem, 8vw, 5rem)';
     }
     return 'clamp(0.3rem, 5vw, 2.5rem)';
@@ -103,7 +107,7 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string, w
       <div
         style={{
           width: "100%",
-          maxWidth: currentWidth <= 768 ? "900vw" : "90vw", // Ajuste dinâmico baseado na largura
+          maxWidth: currentWidth <= 768 ? "900vw" : "909vw", // Ajuste dinâmico baseado na largura
           height: "auto",
           padding: currentWidth <= 768 ? "4rem 1rem" : "1rem",
           margin: "0 auto",
