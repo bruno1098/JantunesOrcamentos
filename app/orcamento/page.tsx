@@ -201,7 +201,9 @@ export default function OrcamentoPage() {
                       value={email}
                       onChange={handleEmailChange}
                       className={`w-full p-2 border rounded ${
-                        email && (emailValido ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50')
+                        email && !verificandoEmail && email.includes('@') ? 
+                          (emailValido ? 'border-green-500' : 'border-red-500') 
+                          : ''
                       }`}
                     />
                     {verificandoEmail && (
