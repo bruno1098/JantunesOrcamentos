@@ -66,6 +66,7 @@ export default function Home() {
   >
   <div className="absolute inset-0">
   <Player
+  key={theme}
   component={HeroAnimation}
   durationInFrames={300}
   compositionWidth={compositionSize.width}

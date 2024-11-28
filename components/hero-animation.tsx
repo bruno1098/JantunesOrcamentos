@@ -7,7 +7,7 @@ import gsap from "gsap";
 export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; width: number }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [gradientKey, setGradientKey] = useState(0);
-  const toalhaRef = useRef(null);
+  const toalhaRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,7 +66,7 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
         ease: "sine.inOut"
       });
     }
-  }, []);
+  }, [theme]);
 
   const frame = useCurrentFrame();
   const isDark = theme === "dark";
@@ -137,29 +137,29 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
     return "clamp(0.3rem, 5vw, 2.5rem)";
   };
 
-  const textGradient = theme === "dark"
-    ? "linear-gradient(to right, #ffffff, #cccccc, #ffffff)"
-    : "linear-gradient(to right, #000000, #333333, #000000)";
+  const textGradient = isDark
+    ? "linear-gradient(to right, #ffffff 20%, #cccccc 50%, #ffffff 80%)"
+    : "linear-gradient(to right, #000000 20%, #333333 50%, #000000 80%)";
 
   const h1Style = {
     fontSize: getTitleSize(),
     fontWeight: "bold",
     background: textGradient,
-    backgroundSize: "300% 100%",
+    backgroundSize: "200% 100%",
     backgroundPosition: `${titleGradientPosition}% 0`,
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     WebkitTextFillColor: "transparent",
     margin: 0,
     lineHeight: 1.1,
-    transition: "background 0.3s ease",
-    filter: isDark ? "none" : "contrast(1.5)",
+    transition: "all 0.3s ease",
+    filter: "none",
   };
 
   const pStyle = {
     fontSize: getSubtitleSize(),
     background: textGradient,
-    backgroundSize: "300% 100%",
+    backgroundSize: "200% 100%",
     backgroundPosition: `${titleGradientPosition}% 0`,
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
@@ -167,8 +167,8 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
     margin: "0 auto",
     maxWidth: isMobile ? "100%" : "min(95%, 800px)",
     lineHeight: isMobile ? 1.3 : 1.4,
-    transition: "background 0.3s ease",
-    filter: isDark ? "none" : "contrast(1.5)",
+    transition: "all 0.3s ease",
+    filter: "none",
   };
 
   return (
