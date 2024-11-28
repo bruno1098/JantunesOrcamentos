@@ -18,11 +18,16 @@ export default function Home() {
     threshold: 0.1,
   });
 
-  const { theme } = useTheme();
+  const { theme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [compositionSize, setCompositionSize] = useState({
     width: 1920,
     height: 1080,
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const updateCompositionSize = () => {
@@ -31,13 +36,11 @@ export default function Home() {
       const baseHeight = 1080;
 
       if (aspectRatio < baseWidth / baseHeight) {
-        // Tela mais alta que a composição
         setCompositionSize({
           width: Math.round(baseWidth),
           height: Math.round(baseWidth / aspectRatio),
         });
       } else {
-        // Tela mais larga ou igual à composição
         setCompositionSize({
           width: Math.round(baseHeight * aspectRatio),
           height: Math.round(baseHeight),
@@ -52,6 +55,13 @@ export default function Home() {
       window.removeEventListener("resize", updateCompositionSize);
     };
   }, []);
+
+  const currentTheme = theme === 'system' ? systemTheme : theme;
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="w-full overflow-x-hidden">
       <WhatsAppButton />
@@ -66,7 +76,7 @@ export default function Home() {
   >
   <div className="absolute inset-0">
   <Player
-  key={theme}
+  key={currentTheme}
   component={HeroAnimation}
   durationInFrames={300}
   compositionWidth={compositionSize.width}
@@ -81,7 +91,7 @@ export default function Home() {
   autoPlay
 
   inputProps={{ 
-    theme: theme || '',
+    theme: currentTheme || '',
     width: 1920
   }}
 />

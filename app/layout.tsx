@@ -31,6 +31,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="j-antunes-theme"
         >
           <ModalProvider />
           <Navigation />
