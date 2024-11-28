@@ -9,7 +9,7 @@ import { ModalProvider } from '@/components/modal-provider';
 import { CartHydration } from "@/components/providers/cart-hydration";
 import Script from 'next/script';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 });
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/images/logo.png', // Caminho para o favicon
   },
-  
+
 };
 
 export default function RootLayout({
@@ -52,20 +52,20 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
 
-<head>
-        <Script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "LocalBusiness",
-              "name": "J.Antunes Locação",
-              "description": "Locação de toalhas e artigos decorativos para festas e eventos.",
-              "url": "https://locacaodetoalhas.vercel.app",
-              "image": "https://locacaodetoalhas.vercel.app/og-image.jpg"
-            })
-          }}
-        />
+      <head><Script
+        id="business-json-ld" 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": "J.Antunes Locação",
+            "description": "Locação de toalhas e artigos decorativos para festas e eventos.",
+            "url": "https://locacaodetoalhas.vercel.app",
+            "image": "https://locacaodetoalhas.vercel.app/images/logo.png",
+          }),
+        }}
+      />
       </head>
 
 
