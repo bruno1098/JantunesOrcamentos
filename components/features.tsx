@@ -34,11 +34,18 @@ export function Features() {
     threshold: 0.1,
   });
 
-  // Refs individuais para cada card
-  const cardRefs = features.map(() => useInView({
-    triggerOnce: true,
-    threshold: 0.3,
-  }));
+  // Criar refs individuais para cada card
+  const [card1Ref, card1InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [card2Ref, card2InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [card3Ref, card3InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [card4Ref, card4InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+
+  const cardRefs = [
+    { ref: card1Ref, inView: card1InView },
+    { ref: card2Ref, inView: card2InView },
+    { ref: card3Ref, inView: card3InView },
+    { ref: card4Ref, inView: card4InView },
+  ];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -104,10 +111,10 @@ export function Features() {
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              ref={cardRefs[index][0]}
+              ref={cardRefs[index].ref}
               variants={cardVariants}
               initial="hidden"
-              animate={cardRefs[index][1] ? "visible" : "hidden"}
+              animate={cardRefs[index].inView ? "visible" : "hidden"}
               className="text-center p-6 rounded-lg bg-white dark:bg-neutral-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
             >
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">

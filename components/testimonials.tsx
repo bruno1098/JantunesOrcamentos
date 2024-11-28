@@ -33,11 +33,16 @@ export function Testimonials() {
     threshold: 0.1,
   });
 
-  // Refs individuais para cada card
-  const cardRefs = testimonials.map(() => useInView({
-    triggerOnce: true,
-    threshold: 0.3,
-  }));
+  // Criar refs individuais para cada depoimento
+  const [testimonial1Ref, testimonial1InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [testimonial2Ref, testimonial2InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [testimonial3Ref, testimonial3InView] = useInView({ triggerOnce: true, threshold: 0.3 });
+
+  const testimonialRefs = [
+    { ref: testimonial1Ref, inView: testimonial1InView },
+    { ref: testimonial2Ref, inView: testimonial2InView },
+    { ref: testimonial3Ref, inView: testimonial3InView },
+  ];
 
   const titleVariants = {
     hidden: { 
@@ -96,10 +101,10 @@ export function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              ref={cardRefs[index][0]}
+              ref={testimonialRefs[index].ref}
               variants={cardVariants}
               initial="hidden"
-              animate={cardRefs[index][1] ? "visible" : "hidden"}
+              animate={testimonialRefs[index].inView ? "visible" : "hidden"}
               className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center mb-6">
