@@ -173,13 +173,6 @@ export function Navigation() {
                   Início
                 </Link>
                 <Link
-                  href="/duvidas-frequentes"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dúvidas Frequentes
-                </Link>
-                <Link
                   href="/produtos"
                   className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -187,13 +180,26 @@ export function Navigation() {
                   Produtos
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/duvidas-frequentes"
+                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Dúvidas Frequentes
+                </Link>
+                <Link
+                  href="/about"
+                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sobre
+                </Link>
+                <Link
+                  href="/contato"
                   className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Contato
                 </Link>
-               
                 <div className="px-3 py-2">
                   <Button
                     variant="ghost"

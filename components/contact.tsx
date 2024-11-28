@@ -12,9 +12,32 @@ import { toast } from "react-hot-toast";
 import { FaWhatsapp } from "react-icons/fa";
 
 export function Contact() {
-  const [ref, inView] = useInView({
+  // Ref para o título
+  const [titleRef, titleInView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
+  });
+
+  // Refs para os itens de contato
+  const [phoneRef, phoneInView] = useInView({
+    triggerOnce: true,
+    threshold: 0.3,
+  });
+
+  const [emailRef, emailInView] = useInView({
+    triggerOnce: true,
+    threshold: 0.3,
+  });
+
+  const [whatsappRef, whatsappInView] = useInView({
+    triggerOnce: true,
+    threshold: 0.3,
+  });
+
+  // Ref para o formulário
+  const [formRef, formInView] = useInView({
+    triggerOnce: true,
+    threshold: 0.3,
   });
 
   const [formData, setFormData] = useState({
@@ -80,11 +103,12 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" ref={ref} className="py-20 px-4 md:px-8">
+    <section id="contact" className="py-20 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         <motion.div
+          ref={titleRef}
           initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          animate={titleInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -97,13 +121,14 @@ export function Contact() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="space-y-8"
-          >
-            <div className="flex items-start space-x-4">
+          <div className="space-y-8">
+            <motion.div
+              ref={phoneRef}
+              initial={{ opacity: 0, x: -50 }}
+              animate={phoneInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6 }}
+              className="flex items-start space-x-4"
+            >
               <Phone className="w-6 h-6 mt-1 text-primary" />
               <div>
                 <h3 className="font-bold mb-1">Telefone</h3>
@@ -111,9 +136,15 @@ export function Contact() {
                   +55 (11) 94252-1204
                 </p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex items-start space-x-4">
+            <motion.div
+              ref={emailRef}
+              initial={{ opacity: 0, x: 50 }}
+              animate={emailInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6 }}
+              className="flex items-start space-x-4"
+            >
               <Mail className="w-6 h-6 mt-1 text-primary" />
               <div>
                 <h3 className="font-bold mb-1">E-mail</h3>
@@ -121,8 +152,15 @@ export function Contact() {
                   j.antunes@gmail.com
                 </p>
               </div>
-            </div>
-            <div className="flex items-start space-x-4">
+            </motion.div>
+
+            <motion.div
+              ref={whatsappRef}
+              initial={{ opacity: 0, x: -50 }}
+              animate={whatsappInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6 }}
+              className="flex items-start space-x-4"
+            >
               <FaWhatsapp className="w-6 h-6 mt-1 text-primary" />
               <div>
                 <h3 className="font-bold mb-1">WhatsApp</h3>
@@ -136,14 +174,14 @@ export function Contact() {
                   Fale Conosco
                 </Button>
               </div>
-            </div>
-
-          </motion.div>
+            </motion.div>
+          </div>
 
           <motion.form
+            ref={formRef}
             onSubmit={handleSubmit}
-            initial={{ opacity: 0, x: 20 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, x: 50 }}
+            animate={formInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >

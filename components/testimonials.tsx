@@ -27,18 +27,17 @@ const testimonials = [
 ];
 
 export function Testimonials() {
-  const [ref, inView] = useInView({
+  // Ref para o título
+  const [titleRef, titleInView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.4 }
-    }
-  };
+  // Refs individuais para cada card
+  const cardRefs = testimonials.map(() => useInView({
+    triggerOnce: true,
+    threshold: 0.3,
+  }));
 
   const titleVariants = {
     hidden: { 
@@ -76,15 +75,13 @@ export function Testimonials() {
   };
 
   return (
-    <section ref={ref} className="py-20 px-4 md:px-8 bg-neutral-50 dark:bg-neutral-900">
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-        className="max-w-7xl mx-auto"
-      >
+    <section className="py-20 px-4 md:px-8 bg-neutral-50 dark:bg-neutral-900">
+      <div className="max-w-7xl mx-auto">
         <motion.div
+          ref={titleRef}
           variants={titleVariants}
+          initial="hidden"
+          animate={titleInView ? "visible" : "hidden"}
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -99,8 +96,10 @@ export function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              custom={index}
+              ref={cardRefs[index][0]}
               variants={cardVariants}
+              initial="hidden"
+              animate={cardRefs[index][1] ? "visible" : "hidden"}
               className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center mb-6">
@@ -133,7 +132,7 @@ export function Testimonials() {
             </motion.div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
