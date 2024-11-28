@@ -376,8 +376,8 @@ export const HeroAnimation = ({ theme, width: initialWidth }: { theme: string; w
             key={gradientKey}
             style={pStyle}
           >
-            Elegância em cada detalhe. Transformando momentos especiais com nossa
-            coleção premium de toalhas e acessórios.
+          Especializados em locação de toalhas e artigos decorativos para festas e eventos. Solicite um orçamento agora e transforme seu evento com J.Antunes Locação!
+
           </p>
         </div>
       </div>

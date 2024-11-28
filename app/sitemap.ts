@@ -5,17 +5,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://locacaodetoalhas.vercel.app';
 
   const routes = [
-    '',
-    '/produtos',
-    '/sobre',
-    '/contato',
-    '/duvidas-frequentes',
+    { url: '', priority: 1 }, // Página inicial
+    { url: '/produtos', priority: 0.9 },
+    { url: '/sobre', priority: 0.7 },
+    { url: '/contato', priority: 0.8 },
+    { url: '/duvidas-frequentes', priority: 0.6 },
   ].map((route) => ({
-    url: `${baseUrl}${route}`,
+    ...route,
+    url: `${baseUrl}${route.url}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: route === '' ? 1 : 0.8,
   }));
+  
 
   const productRoutes = products.map((product) => ({
     url: `${baseUrl}/produtos/${product.id}`,
