@@ -269,9 +269,9 @@ export function ProductCard({ product, index }: ProductCardProps) {
         <div className="relative w-full h-full flex items-center justify-center">
           <button
             onClick={() => setShowFullImage(false)}
-            className="absolute top-4 right-4 text-white z-10 p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="absolute top-4 right-4 z-10 p-2 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-black/10 rounded-full transition-colors"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 text-black dark:text-white" />
           </button>
           <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
             <Image
