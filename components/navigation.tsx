@@ -57,15 +57,15 @@ export function Navigation() {
     >
       <motion.div
         animate={isCartBouncing ? {
-          scale: [1, 1.2, 0.9, 1.1, 1],
-          rotate: [0, -10, 10, -5, 0],
+          scale: [1, 2.9, 1.9, 2.7, 1],
+          rotate: [0, -50, 30, -5, 0],
         } : {}}
         transition={{
-          duration: 0.5,
+          duration: 2.5,
           ease: "easeInOut",
         }}
       >
-        <ShoppingCart className="h-5 w-5" />
+        <ShoppingCart className="h-8 w-8" />
         {items.length > 0 && (
           <motion.span
             initial={{ scale: 0 }}
@@ -186,8 +186,8 @@ export function Navigation() {
                     size="icon"
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   >
-                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <Sun className="h-8 w-8 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-8 w-8 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                   </Button>
                 </div>
               </div>
