@@ -14,8 +14,28 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'J.Antunes - Locação de Toalhas Premium',
-  description: 'Elegância e sofisticação em cada detalhe. Toalhas, guardanapos e trilhos de mesa para eventos especiais.',
+  metadataBase: new URL('https://locacaodetoalhas.vercel.app'),
+  title: {
+    default: 'J.Antunes Locação',
+    template: '%s | J.Antunes Locação'
+  },
+  description: 'Locação de toalhas e artigos para festas e eventos',
+  keywords: ['locação', 'toalhas', 'eventos', 'festas', 'decoração'],
+  robots: {
+    index: true,
+    follow: true
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://locacaodetoalhas.vercel.app',
+    siteName: 'J.Antunes Locação',
+    images: [{
+      url: '/og-image.jpg',
+      width: 1200,
+      height: 630
+    }]
+  }
 };
 
 export default function RootLayout({

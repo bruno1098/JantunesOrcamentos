@@ -184,13 +184,15 @@ export default function OrcamentoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!emailValido) {
-      toast.error("Por favor, insira um email válido.");
-      return;
-    }
-
-    const loadingToast = toast.loading('Processando seu pedido...');
+    
+    const loadingToast = toast.loading('Processando seu pedido...', {
+      style: {
+        background: '#333',
+        color: '#fff',
+        minWidth: '250px',
+      },
+      icon: '🔄'
+    });
 
     try {
       const pedido = {

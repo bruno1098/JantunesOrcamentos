@@ -1,13 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/product-card";
 import { ProductFilter } from "@/components/product-filter";
+import { ProductSkeleton } from "@/components/product-skeleton";
 import { products } from "@/data/products";
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simula tempo de carregamento ao mudar de categoria
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [selectedCategory]);
 
   const filteredProducts = selectedCategory === "all"
     ? products
@@ -34,9 +46,15 @@ export default function ProductsPage() {
         transition={{ delay: 0.2 }}
         className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 mt-8 md:mt-12"
       >
-        {filteredProducts.map((product, index) => (
-          <ProductCard key={product.id} product={product} index={index} />
-        ))}
+        {isLoading ? (
+          Array(6).fill(0).map((_, index) => (
+            <ProductSkeleton key={index} />
+          ))
+        ) : (
+          filteredProducts.map((product, index) => (
+            <ProductCard key={product.id} product={product} index={index} />
+          ))
+        )}
       </motion.div>
     </div>
   );

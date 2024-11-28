@@ -84,46 +84,80 @@ export function ProductCard({ product, index }: ProductCardProps) {
   };
   const [showFullImage, setShowFullImage] = useState(false);
 
+  // Animação de entrada
+  const cardVariants = {
+    hidden: { 
+      opacity: 0,
+      y: 50,
+      scale: 0.9,
+      filter: "blur(10px)"
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.5,
+        delay: index * 0.1, // Efeito cascata
+        ease: [0.23, 1, 0.32, 1],
+        scale: {
+          type: "spring",
+          damping: 15,
+          stiffness: 100
+        }
+      }
+    },
+    hover: {
+      y: -10,
+      scale: 1.02,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
     <>
       <motion.div
         ref={productRef}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: index * 0.1 }}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        whileHover="hover"
+        className="group relative bg-white dark:bg-neutral-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
       >
-        <Card className="overflow-hidden group h-full flex flex-col">
-          <div className="relative h-48 sm:h-64 overflow-hidden">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-          </div>
-          <CardContent className="p-3 sm:p-6 flex-grow">
-            <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-2">{product.name}</h3>
-            <p className="text-neutral-600 dark:text-neutral-300 text-sm sm:text-base line-clamp-3">
-              {product.description}
-            </p>
-          </CardContent>
-          <CardFooter className="p-3 sm:p-6 pt-0">
-            <Button 
-              className="w-full text-sm sm:text-base py-2"
-              onClick={() => setIsModalOpen(true)}
-              disabled={isAdding}
-            >
-              {isAdding ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Adicionar ao Carrinho</span>
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+        <div className="relative h-48 sm:h-64 overflow-hidden">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+        </div>
+        <CardContent className="p-3 sm:p-6 flex-grow">
+          <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-2">{product.name}</h3>
+          <p className="text-neutral-600 dark:text-neutral-300 text-sm sm:text-base line-clamp-3">
+            {product.description}
+          </p>
+        </CardContent>
+        <CardFooter className="p-3 sm:p-6 pt-0">
+          <Button 
+            className="w-full text-sm sm:text-base py-2"
+            onClick={() => setIsModalOpen(true)}
+            disabled={isAdding}
+          >
+            {isAdding ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="whitespace-nowrap">Adicionar ao Carrinho</span>
+              </>
+            )}
+          </Button>
+        </CardFooter>
       </motion.div>
 
       <AnimatePresence>
