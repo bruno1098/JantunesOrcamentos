@@ -656,7 +656,7 @@ export default function OrcamentoPage() {
           <div className="mt-8">
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full h-10 relative overflow-hidden"
               onClick={handleSubmit}
               disabled={!formPreenchido || isSubmitting}
             >

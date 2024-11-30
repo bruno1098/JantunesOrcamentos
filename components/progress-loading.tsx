@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 export function ProgressLoading() {
   return (
     <div className="w-full flex items-center justify-center">
-      <div className="relative w-32 h-7 bg-white/10 rounded-full overflow-hidden">
+      <div className="relative w-full h-full">
         <motion.div
-          className="absolute h-full bg-green-500/40 rounded-full"
+          className="absolute inset-0 bg-green-500/40"
           initial={{ width: "0%" }}
           animate={{ width: "100%" }}
           transition={{
@@ -13,8 +13,10 @@ export function ProgressLoading() {
             ease: "easeInOut",
           }}
         />
-        <div className="absolute inset-0 flex items-center justify-center text-sm text-white">
-          Enviando...
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-white font-medium text-sm">
+            Enviando orçamento...
+          </span>
         </div>
       </div>
     </div>
