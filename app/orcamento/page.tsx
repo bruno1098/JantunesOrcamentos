@@ -215,8 +215,8 @@ export default function OrcamentoPage() {
       { nome: 'Bairro', valor: endereco.bairro },
       { nome: 'Cidade', valor: endereco.cidade },
       { nome: 'Estado', valor: endereco.estado },
-      { nome: 'Data de Entrega', valor: dataEntrega },
-      { nome: 'Data de Retirada', valor: dataRetirada }
+      { nome: 'Data de Entrega', valor: dataEntrega instanceof Date },
+      { nome: 'Data de Retirada', valor: dataRetirada instanceof Date }
     ];
 
     const camposFaltantes = campos.filter(campo => !campo.valor);
@@ -528,8 +528,8 @@ export default function OrcamentoPage() {
       endereco.bairro !== '' &&
       endereco.cidade !== '' &&
       endereco.estado !== '' &&
-      dataEntrega !== null &&
-      dataRetirada !== null &&
+      dataEntrega instanceof Date &&
+      dataRetirada instanceof Date &&
       enderecoConfirmado &&
       items.length > 0;
 
@@ -792,11 +792,7 @@ export default function OrcamentoPage() {
                           <Button
                             onClick={() => {
                               setEnderecoConfirmado(true);
-                              setMostrarAnimacaoOk(true);
                               toast.success('Localização confirmada!');
-                              setTimeout(() => {
-                                setMostrarAnimacaoOk(false);
-                              }, 2000);
                             }}
                             className="bg-green-500 hover:bg-green-600"
                           >
@@ -819,14 +815,14 @@ export default function OrcamentoPage() {
                       </motion.div>
                     )}
 
-                    {mostrarAnimacaoOk && (
+                    {enderecoConfirmado && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="py-4"
+                        className="flex items-center gap-2 text-green-600 mt-2"
                       >
-                        <SuccessCheckmark />
+                        <Check size={20} />
+                        <span className="text-sm">Endereço confirmado!</span>
                       </motion.div>
                     )}
                   </div>
