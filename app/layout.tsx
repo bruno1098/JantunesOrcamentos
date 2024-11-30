@@ -51,26 +51,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-
-      <head><Script
-        id="business-json-ld" 
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            "name": "J.Antunes Locação",
-            "description": "Locação de toalhas e artigos decorativos para festas e eventos.",
-            "url": "https://locacaodetoalhas.vercel.app",
-            "image": "https://locacaodetoalhas.vercel.app/images/logo.png",
-          }),
-        }}
-      />
+    <html lang="pt-BR" suppressHydrationWarning className="overflow-x-hidden">
+      <head>
+        <Script
+          id="business-json-ld" 
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "name": "J.Antunes Locação",
+              "description": "Locação de toalhas e artigos decorativos para festas e eventos.",
+              "url": "https://locacaodetoalhas.vercel.app",
+              "image": "https://locacaodetoalhas.vercel.app/images/logo.png",
+            }),
+          }}
+        />
       </head>
-
-
-      <body id="root" className={`${inter.variable} font-sans antialiased`}>
+      <body id="root" className={`${inter.variable} font-sans antialiased overflow-x-hidden w-screen`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -78,14 +76,16 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="j-antunes-theme"
         >
-          <ModalProvider />
-          <Navigation />
-          <CartHydration>
-            <main>{children}</main>
-          </CartHydration>
-          <Footer />
-          <Toaster position="top-right" />
-          <CookieConsent />
+          <div className="relative w-full overflow-x-hidden">
+            <ModalProvider />
+            <Navigation />
+            <CartHydration>
+              <main className="w-full overflow-x-hidden">{children}</main>
+            </CartHydration>
+            <Footer />
+            <Toaster position="top-right" />
+            <CookieConsent />
+          </div>
         </ThemeProvider>
       </body>
     </html>
