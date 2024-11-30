@@ -16,6 +16,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
 import { registerLocale } from "react-datepicker";
+import { ProgressLoading } from "@/components/progress-loading";
 
 // Registre o locale português
 registerLocale('pt-BR', ptBR);
@@ -110,6 +111,7 @@ export default function OrcamentoPage() {
   const [showEntregaPicker, setShowEntregaPicker] = useState(false);
   const [showRetiradaPicker, setShowRetiradaPicker] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -184,17 +186,12 @@ export default function OrcamentoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    const loadingToast = toast.loading('Processando seu pedido...', {
-      style: {
-        background: '#333',
-        color: '#fff',
-        minWidth: '250px',
-      },
-      icon: '🔄'
-    });
-
     try {
+      // Garante um tempo mínimo de loading de 3 segundos
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 3000));
+      
       const pedido = {
         id: Date.now(),
         data: new Date().toISOString(),
@@ -211,36 +208,38 @@ export default function OrcamentoPage() {
         status: "Pendente"
       };
 
-      // Salvar no localStorage
-      const pedidosAntigos = localStorage.getItem('pedidos');
-      const pedidos = pedidosAntigos ? JSON.parse(pedidosAntigos) : [];
-      pedidos.push(pedido);
-      localStorage.setItem('pedidos', JSON.stringify(pedidos));
+      // Executa todas as operações em paralelo
+      await Promise.all([
+        minLoadingTime,
+        (async () => {
+          // Salvar no localStorage
+          const pedidosAntigos = localStorage.getItem('pedidos');
+          const pedidos = pedidosAntigos ? JSON.parse(pedidosAntigos) : [];
+          pedidos.push(pedido);
+          localStorage.setItem('pedidos', JSON.stringify(pedidos));
 
-      // Primeiro tenta enviar para o administrador
-      console.log('Enviando email para admin...');
-      await enviarEmail({
-        para: 'bruno.saantunes1@gmail.com',
-        assunto: `Nova Solicitação de Orçamento #${pedido.id}`,
-        html: gerarEmailAdmin(pedido)
-      });
+          // Enviar emails
+          await enviarEmail({
+            para: 'bruno.saantunes1@gmail.com',
+            assunto: `Nova Solicitação de Orçamento #${pedido.id}`,
+            html: gerarEmailAdmin(pedido)
+          });
 
-      // Se sucesso, tenta enviar para o cliente
-      console.log('Enviando email para cliente...');
-      await enviarEmail({
-        para: email,
-        assunto: `Confirmação de Solicitação de Orçamento #${pedido.id}`,
-        html: gerarEmailCliente(pedido)
-      });
+          await enviarEmail({
+            para: email,
+            assunto: `Confirmação de Solicitação de Orçamento #${pedido.id}`,
+            html: gerarEmailCliente(pedido)
+          });
+        })()
+      ]);
 
-      // Se chegou aqui, deu tudo certo
       useCartStore.getState().clearCart();
-      toast.success('Orçamento solicitado com sucesso!', { id: loadingToast });
       setShowSuccess(true);
-
     } catch (error: any) {
       console.error("Erro detalhado:", error);
-      toast.error(error.message || 'Erro ao processar seu pedido', { id: loadingToast });
+      toast.error(error.message || 'Erro ao processar seu pedido');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -659,9 +658,13 @@ export default function OrcamentoPage() {
               type="submit" 
               className="w-full"
               onClick={handleSubmit}
-              disabled={!formPreenchido}
+              disabled={!formPreenchido || isSubmitting}
             >
-              {formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos para enviar o orçamento'}
+              {isSubmitting ? (
+                <ProgressLoading />
+              ) : (
+                formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos para enviar o orçamento'
+              )}
             </Button>
           </div>
         </motion.div>
