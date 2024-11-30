@@ -206,8 +206,47 @@ export default function OrcamentoPage() {
     verificarCamposPreenchidos();
   }, [email, nomeEvento, cep, endereco, dataEntrega, dataRetirada, verificarCamposPreenchidos]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const verificarCamposFaltantes = () => {
+    const campos = [
+      { nome: 'Email', valor: email },
+      { nome: 'Nome do Evento', valor: nomeEvento },
+      { nome: 'Endereço', valor: endereco.rua },
+      { nome: 'Número', valor: endereco.numero },
+      { nome: 'Bairro', valor: endereco.bairro },
+      { nome: 'Cidade', valor: endereco.cidade },
+      { nome: 'Estado', valor: endereco.estado },
+      { nome: 'Data de Entrega', valor: dataEntrega },
+      { nome: 'Data de Retirada', valor: dataRetirada }
+    ];
+
+    const camposFaltantes = campos.filter(campo => !campo.valor);
+    return camposFaltantes;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const camposFaltantes = verificarCamposFaltantes();
+    
+    if (camposFaltantes.length > 0) {
+      const mensagemCampos = camposFaltantes
+        .map(campo => campo.nome)
+        .join(', ');
+      
+      toast.error(`Por favor, preencha os seguintes campos: ${mensagemCampos}`);
+      return;
+    }
+
+    if (!enderecoConfirmado) {
+      toast.error('Por favor, confirme a localização no mapa');
+      return;
+    }
+
+    if (!emailValido) {
+      toast.error('Por favor, insira um email válido');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -478,6 +517,33 @@ export default function OrcamentoPage() {
       </motion.div>
     </motion.div>
   );
+
+  useEffect(() => {
+    const todosPreenchidos = 
+      email !== '' &&
+      emailValido &&
+      nomeEvento !== '' &&
+      endereco.rua !== '' &&
+      endereco.numero !== '' &&
+      endereco.bairro !== '' &&
+      endereco.cidade !== '' &&
+      endereco.estado !== '' &&
+      dataEntrega !== null &&
+      dataRetirada !== null &&
+      enderecoConfirmado &&
+      items.length > 0;
+
+    setFormPreenchido(todosPreenchidos);
+  }, [
+    email,
+    emailValido,
+    nomeEvento,
+    endereco,
+    dataEntrega,
+    dataRetirada,
+    enderecoConfirmado,
+    items
+  ]);
 
   return (
     <main className="min-h-screen bg-background pt-24">
@@ -957,14 +1023,21 @@ export default function OrcamentoPage() {
           <div className="mt-8">
             <Button 
               type="submit" 
-              className="w-full"
+              className={`w-full ${!formPreenchido ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleSubmit}
               disabled={!formPreenchido || isSubmitting}
             >
               {isSubmitting ? (
                 <ProgressLoading />
               ) : (
-                formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos para enviar o orçamento'
+                formPreenchido ? 'Enviar Orçamento' : (
+                  <div className="flex flex-col items-center">
+                    <span>Preencha todos os campos</span>
+                    <span className="text-xs text-muted-foreground">
+                      (Clique para ver quais campos faltam)
+                    </span>
+                  </div>
+                )
               )}
             </Button>
           </div>
