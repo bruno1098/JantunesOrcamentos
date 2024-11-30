@@ -88,8 +88,7 @@ export default function RootLayout({
             <CookieConsent />
           </div>
         </ThemeProvider>  
-         <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
-      
+        
       </body>
     </html>
   );
