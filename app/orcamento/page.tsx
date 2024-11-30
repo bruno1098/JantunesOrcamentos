@@ -134,6 +134,7 @@ export default function OrcamentoPage() {
   const [termoBusca, setTermoBusca] = useState("");
   const [enderecoConfirmado, setEnderecoConfirmado] = useState(false);
   const [mostrarAnimacaoOk, setMostrarAnimacaoOk] = useState(false);
+  const [camposComErro, setCamposComErro] = useState<string[]>([]);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -208,19 +209,20 @@ export default function OrcamentoPage() {
 
   const verificarCamposFaltantes = () => {
     const campos = [
-      { nome: 'Email', valor: email },
-      { nome: 'Nome do Evento', valor: nomeEvento },
-      { nome: 'Endereço', valor: endereco.rua },
-      { nome: 'Número', valor: endereco.numero },
-      { nome: 'Bairro', valor: endereco.bairro },
-      { nome: 'Cidade', valor: endereco.cidade },
-      { nome: 'Estado', valor: endereco.estado },
-      { nome: 'Data de Entrega', valor: dataEntrega instanceof Date },
-      { nome: 'Data de Retirada', valor: dataRetirada instanceof Date }
+      { nome: 'email', valor: email, label: 'Email' },
+      { nome: 'nomeEvento', valor: nomeEvento, label: 'Nome do Evento' },
+      { nome: 'endereco', valor: endereco.rua, label: 'Endereço' },
+      { nome: 'numero', valor: endereco.numero, label: 'Número' },
+      { nome: 'bairro', valor: endereco.bairro, label: 'Bairro' },
+      { nome: 'cidade', valor: endereco.cidade, label: 'Cidade' },
+      { nome: 'estado', valor: endereco.estado, label: 'Estado' },
+      { nome: 'dataEntrega', valor: dataEntrega, label: 'Data de Entrega' },
+      { nome: 'dataRetirada', valor: dataRetirada, label: 'Data de Retirada' }
     ];
 
-    const camposFaltantes = campos.filter(campo => !campo.valor);
-    return camposFaltantes;
+    const faltantes = campos.filter(campo => !campo.valor);
+    setCamposComErro(faltantes.map(campo => campo.nome));
+    return faltantes;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -230,7 +232,7 @@ export default function OrcamentoPage() {
     
     if (camposFaltantes.length > 0) {
       const mensagemCampos = camposFaltantes
-        .map(campo => campo.nome)
+        .map(campo => campo.label)
         .join(', ');
       
       toast.error(`Por favor, preencha os seguintes campos: ${mensagemCampos}`);
@@ -545,6 +547,11 @@ export default function OrcamentoPage() {
     items
   ]);
 
+  const getInputClassName = (fieldName: string) => `
+    w-full p-3 border rounded-lg bg-background
+    ${camposComErro.includes(fieldName) ? 'border-red-500 focus:border-red-500' : ''}
+  `;
+
   return (
     <main className="min-h-screen bg-background pt-24">
       {showSuccess && (
@@ -575,11 +582,7 @@ export default function OrcamentoPage() {
                       required 
                       value={email}
                       onChange={handleEmailChange}
-                      className={`w-full p-2 border rounded ${
-                        email && !verificandoEmail && email.includes('@') ? 
-                          (emailValido ? 'border-green-500' : 'border-red-500') 
-                          : ''
-                      }`}
+                      className={getInputClassName('email')}
                     />
                     {verificandoEmail && (
                       <span className="absolute right-2 top-2 text-sm text-gray-500">
@@ -1019,21 +1022,24 @@ export default function OrcamentoPage() {
           <div className="mt-8">
             <Button 
               type="submit" 
-              className={`w-full ${!formPreenchido ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={handleSubmit}
+              className={`w-full ${!formPreenchido && !isSubmitting ? 'opacity-50' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!formPreenchido) {
+                  verificarCamposFaltantes();
+                  toast.error('Por favor, preencha todos os campos obrigatórios');
+                  return;
+                }
+                handleSubmit(e);
+              }}
               disabled={!formPreenchido || isSubmitting}
             >
               {isSubmitting ? (
-                <ProgressLoading />
+                <div className="w-full">
+                  <ProgressLoading />
+                </div>
               ) : (
-                formPreenchido ? 'Enviar Orçamento' : (
-                  <div className="flex flex-col items-center">
-                    <span>Preencha todos os campos</span>
-                    <span className="text-xs text-muted-foreground">
-                      (Clique para ver quais campos faltam)
-                    </span>
-                  </div>
-                )
+                formPreenchido ? 'Enviar Orçamento' : 'Preencha todos os campos'
               )}
             </Button>
           </div>

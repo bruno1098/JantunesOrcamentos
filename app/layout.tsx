@@ -9,6 +9,7 @@ import { ModalProvider } from '@/components/modal-provider';
 import { CartHydration } from "@/components/providers/cart-hydration";
 import Script from 'next/script';
 import { CookieConsent } from '@/components/CookieConsent';
+import StyledComponentsRegistry from '@/lib/registry';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -86,7 +87,9 @@ export default function RootLayout({
             <Toaster position="top-right" />
             <CookieConsent />
           </div>
-        </ThemeProvider>
+        </ThemeProvider>  
+         <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+      
       </body>
     </html>
   );
