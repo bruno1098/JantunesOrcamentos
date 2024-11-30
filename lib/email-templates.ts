@@ -8,9 +8,13 @@ interface PedidoEmailProps {
   endereco: {
     cep: string;
     rua: string;
+    numero: string;
+    complemento?: string;
     bairro: string;
     cidade: string;
     estado: string;
+    latitude?: number;
+    longitude?: number;
   };
   dataEntrega: string;
   dataRetirada: string;
@@ -27,6 +31,10 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
       year: 'numeric'
     });
   };
+
+  const mapaUrl = pedido.endereco.latitude && pedido.endereco.longitude
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${pedido.endereco.longitude - 0.01},${pedido.endereco.latitude - 0.01},${pedido.endereco.longitude + 0.01},${pedido.endereco.latitude + 0.01}&layer=mapnik&marker=${pedido.endereco.latitude},${pedido.endereco.longitude}`
+    : null;
 
   return `
     <!DOCTYPE html>
@@ -90,62 +98,126 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
           font-size: 12px;
           color: #666;
         }
+        .map-container {
+          width: 100%;
+          height: 200px;
+          border-radius: 8px;
+          overflow: hidden;
+          margin: 20px 0;
+          border: 1px solid #e2e8f0;
+        }
+        .address-card {
+          background-color: #f8fafc;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 10px 0;
+          border: 1px solid #e2e8f0;
+        }
+        .event-details {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 15px;
+          margin: 20px 0;
+        }
+        .event-card {
+          background-color: #f8fafc;
+          border-radius: 8px;
+          padding: 15px;
+          border: 1px solid #e2e8f0;
+        }
+        .status-badge {
+          background-color: #fca311;
+          color: #010101;
+          padding: 5px 10px;
+          border-radius: 4px;
+          font-size: 14px;
+          display: inline-block;
+          margin: 10px 0;
+        }
       </style>
     </head>
     <body>
       <div class="email-container">
         <!-- Cabeçalho -->
         <div class="header">
-          <img src="https://jantunes.vercel.app/_next/static/media/logo.fab738f9.png" alt="Logo da Empresa">
+          <img src="https://jantunes.vercel.app/_next/static/media/logo.fab738f9.png" alt="Logo J.Antunes">
+          <div class="status-badge">${pedido.status}</div>
         </div>
+
         <!-- Conteúdo -->
         <div class="content">
           <h1>Pedido Recebido com Sucesso!</h1>
           <p>Olá,</p>
           <p>Seu pedido <strong>#${pedido.id}</strong> foi recebido em ${formatarData(pedido.data)}.</p>
-          <p>Um de nossos consultores especializados entrará em contato através do seu email (${pedido.email}) nas próximas 24 horas úteis para discutir os detalhes do seu evento e finalizar seu orçamento.</p>
-          <p>Fique tranquilo(a)! Estamos empenhados em tornar seu evento ainda mais especial.</p>
 
           <!-- Detalhes do Evento -->
-          <h2>Detalhes do Evento</h2>
-          <p><strong>Nome do Evento:</strong> ${pedido.nomeEvento}</p>
-          <p><strong>Data de Entrega:</strong> ${formatarData(pedido.dataEntrega)}</p>
-          <p><strong>Data de Retirada:</strong> ${formatarData(pedido.dataRetirada)}</p>
+          <div class="event-details">
+            <div class="event-card">
+              <h3>Evento</h3>
+              <p><strong>Nome:</strong> ${pedido.nomeEvento}</p>
+              <p><strong>Entrega:</strong> ${formatarData(pedido.dataEntrega)}</p>
+              <p><strong>Retirada:</strong> ${formatarData(pedido.dataRetirada)}</p>
+            </div>
 
-          <!-- Local do Evento -->
-          <h2>Local do Evento</h2>
-          <p>${pedido.endereco.rua}</p>
-          <p>${pedido.endereco.bairro}, ${pedido.endereco.cidade} - ${pedido.endereco.estado}</p>
-          <p>CEP: ${pedido.endereco.cep}</p>
+            <div class="event-card">
+              <h3>Local</h3>
+              <p>${pedido.endereco.rua}, ${pedido.endereco.numero}</p>
+              ${pedido.endereco.complemento ? `<p>Complemento: ${pedido.endereco.complemento}</p>` : ''}
+              <p>${pedido.endereco.bairro}</p>
+              <p>${pedido.endereco.cidade} - ${pedido.endereco.estado}</p>
+              <p>CEP: ${pedido.endereco.cep}</p>
+            </div>
+          </div>
+
+          ${mapaUrl ? `
+            <div class="map-container">
+              <iframe
+                width="100%"
+                height="100%"
+                frameborder="0"
+                scrolling="no"
+                src="${mapaUrl}"
+              ></iframe>
+            </div>
+          ` : ''}
 
           <!-- Itens Solicitados -->
           <h2>Itens Solicitados</h2>
           ${pedido.itens.map(item => `
             <div class="item">
-              <img src="${item.image}" alt="${item.name}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <img src="${item.image}" alt="${item.name}">
               <div class="item-details">
-                <h3 style="margin: 0 0 8px 0; color: #004d99;">${item.name}</h3>
-                <p style="margin: 4px 0;"><strong>Quantidade:</strong> ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}</p>
-                ${item.observation ? `<p style="margin: 4px 0;"><strong>Observação:</strong> ${item.observation}</p>` : ''}
+                <h3>${item.name}</h3>
+                <p><strong>Quantidade:</strong> ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}</p>
+                ${item.observation ? `<p><strong>Observação:</strong> ${item.observation}</p>` : ''}
               </div>
             </div>
           `).join('')}
 
-          <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
-            <p style="margin: 0; font-weight: bold; color: #004d99;">Próximos Passos:</p>
-            <ol style="margin: 10px 0;">
-              <li>Aguarde o contato de nosso consultor em até 24 horas úteis</li>
-              <li>Discuta os detalhes específicos do seu evento</li>
-              <li>Receba seu orçamento personalizado</li>
-              <li>Confirme sua reserva</li>
+          ${pedido.mensagem ? `
+            <div class="message-card">
+              <h3>Sua Mensagem</h3>
+              <p>${pedido.mensagem}</p>
+            </div>
+          ` : ''}
+
+          <div class="next-steps">
+            <h3>Próximos Passos</h3>
+            <ol>
+              <li>Aguarde nosso contato em até 24h úteis</li>
+              <li>Discutiremos os detalhes do seu evento</li>
+              <li>Enviaremos seu orçamento personalizado</li>
+              <li>Após sua aprovação, confirmaremos sua reserva</li>
             </ol>
           </div>
 
-          <!-- Botão -->
-          <p style="text-align: center;">
-            <a href="https://locacaodetoalhas.vercel.app/meus-pedidos" class="button">Acompanhar Pedido</a>
-          </p>
+          <div class="cta-button">
+            <a href="https://locacaodetoalhas.vercel.app/meus-pedidos" class="button">
+              Acompanhar Pedido
+            </a>
+          </div>
         </div>
+
         <!-- Rodapé -->
         <div class="footer">
           <p><strong>J.ANTUNES</strong></p>
@@ -168,6 +240,10 @@ export function gerarEmailAdmin(pedido: PedidoEmailProps) {
     });
   };
 
+  const mapaUrl = pedido.endereco.latitude && pedido.endereco.longitude
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${pedido.endereco.longitude - 0.01},${pedido.endereco.latitude - 0.01},${pedido.endereco.longitude + 0.01},${pedido.endereco.latitude + 0.01}&layer=mapnik&marker=${pedido.endereco.latitude},${pedido.endereco.longitude}`
+    : null;
+
   return `
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -181,134 +257,168 @@ export function gerarEmailAdmin(pedido: PedidoEmailProps) {
           background-color: #f6f6f6;
           margin: 0;
           padding: 0;
+          line-height: 1.6;
         }
         .email-container {
           max-width: 800px;
           margin: 0 auto;
           background-color: #ffffff;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .header {
           background-color: #1a1a1a;
-          padding: 20px;
+          padding: 30px 20px;
           text-align: center;
           color: #ffffff;
         }
         .header img {
           width: 150px;
+          margin-bottom: 15px;
         }
         .content {
-          padding: 20px;
+          padding: 30px;
         }
-        h1, h2 {
-          color: #1a1a1a;
+        .status-badge {
+          background-color: #ffd700;
+          color: #000;
+          padding: 8px 16px;
+          border-radius: 20px;
+          display: inline-block;
+          font-weight: bold;
+          margin: 10px 0;
+        }
+        .info-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          margin: 20px 0;
+        }
+        .info-card {
+          background-color: #f8fafc;
+          border-radius: 12px;
+          padding: 20px;
+          border: 1px solid #e2e8f0;
+        }
+        .map-container {
+          width: 100%;
+          height: 300px;
+          border-radius: 12px;
+          overflow: hidden;
+          margin: 20px 0;
+          border: 1px solid #e2e8f0;
         }
         .item {
           display: flex;
+          background-color: #f8fafc;
+          border-radius: 12px;
+          padding: 15px;
           margin-bottom: 15px;
+          border: 1px solid #e2e8f0;
         }
         .item img {
-          width: 150px;
-          height: 150px;
+          width: 120px;
+          height: 120px;
           object-fit: cover;
-          margin-right: 15px;
+          border-radius: 8px;
+          margin-right: 20px;
         }
         .item-details {
           flex: 1;
+        }
+        .message-box {
+          background-color: #f8fafc;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+          border: 1px solid #e2e8f0;
+        }
+        .total-box {
+          background-color: #1a1a1a;
+          color: #ffffff;
+          padding: 20px;
+          border-radius: 12px;
+          margin-top: 20px;
+          text-align: right;
+          font-size: 18px;
         }
         .footer {
           background-color: #f6f6f6;
           padding: 20px;
           text-align: center;
-          font-size: 12px;
+          font-size: 14px;
           color: #666;
-        }
-        .status {
-          background-color: #ffd700;
-          color: #000;
-          padding: 5px 10px;
-          border-radius: 4px;
-          display: inline-block;
-          margin-top: 10px;
-        }
-        .grid {
-          display: flex;
-          flex-wrap: wrap;
-        }
-        .grid .column {
-          flex: 1;
-          padding: 10px;
-        }
-        .total {
-          background-color: #1a1a1a;
-          color: #ffffff;
-          padding: 20px;
-          text-align: right;
-          font-size: 18px;
-          margin-top: 20px;
         }
       </style>
     </head>
     <body>
       <div class="email-container">
-        <!-- Cabeçalho -->
         <div class="header">
-          <img src="https://jantunes.vercel.app/_next/static/media/logo.fab738f9.png" alt="Logo da Empresa">
+          <img src="https://jantunes.vercel.app/_next/static/media/logo.fab738f9.png" alt="Logo J.Antunes">
           <h1>Nova Solicitação de Orçamento</h1>
           <p>Pedido <strong>#${pedido.id}</strong> - ${formatarData(pedido.data)}</p>
-          <span class="status">${pedido.status}</span>
+          <span class="status-badge">${pedido.status}</span>
         </div>
-        <!-- Conteúdo -->
+
         <div class="content">
-          <div class="grid">
-            <!-- Informações do Cliente -->
-            <div class="column">
-              <h2>Cliente</h2>
+          <div class="info-grid">
+            <div class="info-card">
+              <h2>Informações do Cliente</h2>
               <p><strong>Email:</strong> ${pedido.email}</p>
               <p><strong>Evento:</strong> ${pedido.nomeEvento}</p>
+              <p><strong>Data de Entrega:</strong> ${formatarData(pedido.dataEntrega)}</p>
+              <p><strong>Data de Retirada:</strong> ${formatarData(pedido.dataRetirada)}</p>
             </div>
-            <!-- Datas -->
-            <div class="column">
-              <h2>Datas</h2>
-              <p><strong>Entrega:</strong> ${formatarData(pedido.dataEntrega)}</p>
-              <p><strong>Retirada:</strong> ${formatarData(pedido.dataRetirada)}</p>
+
+            <div class="info-card">
+              <h2>Endereço do Evento</h2>
+              <p>${pedido.endereco.rua}, ${pedido.endereco.numero}</p>
+              ${pedido.endereco.complemento ? `<p>Complemento: ${pedido.endereco.complemento}</p>` : ''}
+              <p>${pedido.endereco.bairro}</p>
+              <p>${pedido.endereco.cidade} - ${pedido.endereco.estado}</p>
+              <p>CEP: ${pedido.endereco.cep}</p>
             </div>
           </div>
 
-          <!-- Local do Evento -->
-          <h2>Local do Evento</h2>
-          <p>${pedido.endereco.rua}</p>
-          <p>${pedido.endereco.bairro}, ${pedido.endereco.cidade} - ${pedido.endereco.estado}</p>
-          <p>CEP: ${pedido.endereco.cep}</p>
+          ${mapaUrl ? `
+            <div class="map-container">
+              <iframe
+                width="100%"
+                height="100%"
+                frameborder="0"
+                scrolling="no"
+                src="${mapaUrl}"
+              ></iframe>
+            </div>
+          ` : ''}
 
-          <!-- Itens Solicitados -->
           <h2>Itens Solicitados</h2>
           ${pedido.itens.map(item => `
             <div class="item">
               <img src="${item.image}" alt="${item.name}">
               <div class="item-details">
-                <p><strong>${item.name}</strong></p>
-                <p>Quantidade: ${item.quantity}</p>
-                ${item.observation ? `<p>Observação: ${item.observation}</p>` : ''}
+                <h3>${item.name}</h3>
+                <p><strong>Quantidade:</strong> ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}</p>
+                ${item.observation ? `<p><strong>Observação:</strong> ${item.observation}</p>` : ''}
               </div>
             </div>
           `).join('')}
 
-          <!-- Mensagem do Cliente -->
           ${pedido.mensagem ? `
-            <h2>Mensagem do Cliente</h2>
-            <p>${pedido.mensagem}</p>
+            <div class="message-box">
+              <h2>Mensagem do Cliente</h2>
+              <p>${pedido.mensagem}</p>
+            </div>
           ` : ''}
 
-          <!-- Total de Itens -->
-          <div class="total">
+          <div class="total-box">
             <p>Total de Itens: ${pedido.itens.reduce((acc, item) => acc + item.quantity, 0)}</p>
           </div>
         </div>
-        <!-- Rodapé -->
+
         <div class="footer">
           <p><strong>J.ANTUNES</strong></p>
           <p>Telefone: (11) 94252-1204</p>
-          <p>Email: j.antunes@gmail.com</p>
+          <p>Email: j.antuness@gmail.com</p>
           <p>© ${new Date().getFullYear()} J.Antunes. Todos os direitos reservados.</p>
         </div>
       </div>
