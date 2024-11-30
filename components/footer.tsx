@@ -49,6 +49,16 @@ export function Footer() {
                   Dúvidas Frequentes
                 </a>
               </li>
+              <li>
+                <a href="/termos-condicoes" className="text-neutral-400 hover:text-white transition-colors">
+                  Termos e Condições
+                </a>
+              </li>
+              <li>
+                <a href="/politica-privacidade" className="text-neutral-400 hover:text-white transition-colors">
+                  Política de Privacidade
+                </a>
+              </li>
             </ul>
           </div>
 

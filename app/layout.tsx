@@ -8,6 +8,7 @@ import { Toaster } from 'react-hot-toast';
 import { ModalProvider } from '@/components/modal-provider';
 import { CartHydration } from "@/components/providers/cart-hydration";
 import Script from 'next/script';
+import { CookieConsent } from '@/components/CookieConsent';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -84,6 +85,7 @@ export default function RootLayout({
           </CartHydration>
           <Footer />
           <Toaster position="top-right" />
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>

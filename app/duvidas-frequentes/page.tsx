@@ -25,7 +25,7 @@ const faqs: FAQ[] = [
     },
     {
         pergunta: "Qual é a antecedência necessária para fazer a reserva?",
-        resposta: "Recomendamos fazer a reserva com pelo menos 30 dias de antecedência para garantir a disponibilidade dos produtos desejados. Para eventos em alta temporada (como dezembro), sugerimos um prazo ainda maior."
+        resposta: "Recomendamos fazer a reserva com pelo menos 7 dias de antecedência para garantir a disponibilidade dos produtos desejados. Para eventos em alta temporada (como dezembro), sugerimos um prazo ainda maior."
     },
     {
         pergunta: "Como é feita a entrega e retirada dos produtos?",
