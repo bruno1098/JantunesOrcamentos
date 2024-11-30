@@ -23,6 +23,11 @@ interface PedidoEmailProps {
   status: string;
 }
 
+// Função auxiliar para gerar URL da imagem do mapa
+const gerarUrlMapaEstatico = (latitude: number, longitude: number) => {
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=15&size=600x300&markers=${latitude},${longitude}&format=png`;
+};
+
 export function gerarEmailCliente(pedido: PedidoEmailProps) {
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {
@@ -169,15 +174,22 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
             </div>
           </div>
 
-          ${mapaUrl ? `
-            <div class="map-container">
-              <iframe
-                width="100%"
-                height="100%"
-                frameborder="0"
-                scrolling="no"
-                src="${mapaUrl}"
-              ></iframe>
+          ${pedido.endereco.latitude && pedido.endereco.longitude ? `
+            <div class="map-container" style="margin: 20px 0;">
+              <img 
+                src="${gerarUrlMapaEstatico(pedido.endereco.latitude, pedido.endereco.longitude)}"
+                alt="Localização do evento"
+                style="width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;"
+              />
+              <div style="margin-top: 8px; text-align: center;">
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=${pedido.endereco.latitude},${pedido.endereco.longitude}" 
+                  style="color: #004d99; text-decoration: underline;"
+                  target="_blank"
+                >
+                  Abrir no Google Maps
+                </a>
+              </div>
             </div>
           ` : ''}
 
@@ -379,15 +391,22 @@ export function gerarEmailAdmin(pedido: PedidoEmailProps) {
             </div>
           </div>
 
-          ${mapaUrl ? `
-            <div class="map-container">
-              <iframe
-                width="100%"
-                height="100%"
-                frameborder="0"
-                scrolling="no"
-                src="${mapaUrl}"
-              ></iframe>
+          ${pedido.endereco.latitude && pedido.endereco.longitude ? `
+            <div class="map-container" style="margin: 20px 0;">
+              <img 
+                src="${gerarUrlMapaEstatico(pedido.endereco.latitude, pedido.endereco.longitude)}"
+                alt="Localização do evento"
+                style="width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;"
+              />
+              <div style="margin-top: 8px; text-align: center;">
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=${pedido.endereco.latitude},${pedido.endereco.longitude}" 
+                  style="color: #004d99; text-decoration: underline;"
+                  target="_blank"
+                >
+                  Abrir no Google Maps
+                </a>
+              </div>
             </div>
           ` : ''}
 
