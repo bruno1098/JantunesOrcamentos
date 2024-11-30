@@ -7,6 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { LoadingDots } from "@/components/loading-dots";
+import { toast } from "react-hot-toast";
 
 interface CartProps {
   isOpen: boolean;
@@ -16,10 +19,26 @@ interface CartProps {
 export function Cart({ isOpen, onClose }: CartProps) {
   const { items, removeItem } = useCartStore();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSolicitarOrcamento = () => {
-    onClose();
-    router.push("/orcamento");
+  const handleSolicitarOrcamento = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Primeiro, aguarda obrigatoriamente os 2 segundos da animação
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Só depois inicia e aguarda a navegação
+      await router.push("/orcamento");
+      
+      // Fecha o carrinho apenas quando tudo estiver pronto
+      onClose();
+    } catch (error) {
+      console.error("Erro ao navegar:", error);
+      toast.error("Erro ao carregar a página de orçamento");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -107,10 +126,14 @@ export function Cart({ isOpen, onClose }: CartProps) {
               <div className="p-6 border-t dark:border-neutral-800">
                 <Button 
                   className="w-full" 
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || isLoading}
                   onClick={handleSolicitarOrcamento}
                 >
-                  Solicitar Orçamento
+                  {isLoading ? (
+                    <LoadingDots />
+                  ) : (
+                    'Solicitar Orçamento'
+                  )}
                 </Button>
               </div>
             </div>

@@ -25,5 +25,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
+  
   return [...routes, ...productRoutes];
 } 
