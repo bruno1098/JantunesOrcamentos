@@ -17,6 +17,7 @@ import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
 import { registerLocale } from "react-datepicker";
 import { ProgressLoading } from "@/components/progress-loading";
+import { salvarPedido } from "@/lib/pedidos-service";
 
 // Registre o locale português
 registerLocale('pt-BR', ptBR);
@@ -102,7 +103,7 @@ interface Endereco {
 
 export default function OrcamentoPage() {
   const router = useRouter();
-  const { items, updateItemQuantity } = useCartStore();
+  const { items, updateItemQuantity, clearCart } = useCartStore();
   const [email, setEmail] = useState("");
   const [nomeEvento, setNomeEvento] = useState("");
   const [localEvento, setLocalEvento] = useState("");
@@ -135,6 +136,7 @@ export default function OrcamentoPage() {
   const [enderecoConfirmado, setEnderecoConfirmado] = useState(false);
   const [mostrarAnimacaoOk, setMostrarAnimacaoOk] = useState(false);
   const [camposComErro, setCamposComErro] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -225,75 +227,66 @@ export default function OrcamentoPage() {
     return faltantes;
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    const camposFaltantes = verificarCamposFaltantes();
-    
-    if (camposFaltantes.length > 0) {
-      const mensagemCampos = camposFaltantes
-        .map(campo => campo.label)
-        .join(', ');
-      
-      toast.error(`Por favor, preencha os seguintes campos: ${mensagemCampos}`);
-      return;
-    }
-
-    if (!enderecoConfirmado) {
-      toast.error('Por favor, confirme a localização no mapa');
-      return;
-    }
-
-    if (!emailValido) {
-      toast.error('Por favor, insira um email válido');
-      return;
-    }
-
-    setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     try {
-      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const pedido = {
-        id: Date.now(),
-        data: new Date().toISOString(),
-        email,
+      setIsSubmitting(true);
+
+      // Criar objeto do pedido
+      const novoPedido = {
         nomeEvento,
-        endereco,
-        dataEntrega: dataEntrega ? format(dataEntrega, 'yyyy-MM-dd') : '',
-        dataRetirada: dataRetirada ? format(dataRetirada, 'yyyy-MM-dd') : '',
-        itens: items,
-        mensagem,
-        status: "Pendente"
+        data: new Date().toISOString(),
+        dataEntrega: dataEntrega?.toISOString() || '',
+        dataRetirada: dataRetirada?.toISOString() || '',
+        status: 'Pendente',
+        email,
+        endereco: {
+          rua: endereco.rua,
+          numero: endereco.numero,
+          complemento: endereco.complemento,
+          bairro: endereco.bairro,
+          cidade: endereco.cidade,
+          estado: endereco.estado,
+          cep: endereco.cep,
+          latitude: endereco.latitude,
+          longitude: endereco.longitude
+        },
+        itens: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          observation: item.observation,
+          image: item.image,
+          category: item.category,
+          description: item.description
+        })),
+        mensagem
       };
 
+      // Salvar no Firebase
+      const pedidoId = await salvarPedido(novoPedido);
+
+      // Enviar emails com o ID como string
       await Promise.all([
-        minLoadingTime,
-        (async () => {
-          const pedidosAntigos = localStorage.getItem('pedidos');
-          const pedidos = pedidosAntigos ? JSON.parse(pedidosAntigos) : [];
-          pedidos.push(pedido);
-          localStorage.setItem('pedidos', JSON.stringify(pedidos));
-
-          await enviarEmail({
-            para: 'bruno.saantunes1@gmail.com',
-            assunto: `Nova Solicitação de Orçamento #${pedido.id}`,
-            html: gerarEmailAdmin(pedido)
-          });
-
-          await enviarEmail({
-            para: email,
-            assunto: `Confirmação de Solicitação de Orçamento #${pedido.id}`,
-            html: gerarEmailCliente(pedido)
-          });
-        })()
+        enviarEmail({
+          para: email,
+          assunto: `Pedido #${pedidoId} - Confirmação de Orçamento`,
+          html: gerarEmailCliente({ ...novoPedido, id: pedidoId }) // ID como string
+        }),
+        enviarEmail({
+          para: 'seu-email@exemplo.com',
+          assunto: `Novo Pedido #${pedidoId}`,
+          html: gerarEmailAdmin({ ...novoPedido, id: pedidoId }) // ID como string
+        })
       ]);
 
-      useCartStore.getState().clearCart();
-      setShowSuccess(true);
-    } catch (error: any) {
-      console.error("Erro detalhado:", error);
-      toast.error(error.message || 'Erro ao processar seu pedido');
+      // Redirecionar para meus pedidos
+      router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
+
+    } catch (error) {
+      console.error('Erro ao processar pedido:', error);
+      toast.error('Erro ao processar pedido. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -414,7 +407,7 @@ export default function OrcamentoPage() {
   }, [showEntregaPicker, showRetiradaPicker]);
 
   const buscarEndereco = async (termo: string) => {
-    if (termo.length < 5) {
+    if (termo.length < 3) {
       setMostrarCamposEndereco(false);
       return;
     }
@@ -423,6 +416,7 @@ export default function OrcamentoPage() {
     try {
       const termoPesquisa = termo.replace(/[^\w\s]/gi, '').trim();
       
+      // Busca por CEP
       if (/^\d{8}$/.test(termoPesquisa)) {
         const response = await fetch(`https://viacep.com.br/ws/${termoPesquisa}/json/`);
         const data = await response.json();
@@ -431,22 +425,37 @@ export default function OrcamentoPage() {
           setEndereco(prev => ({
             ...prev,
             cep: termoPesquisa,
-            rua: data.logradouro || '',
-            bairro: data.bairro || '',
-            cidade: data.localidade || '',
-            estado: data.uf || '',
+            rua: data.logradouro,
+            bairro: data.bairro,
+            cidade: data.localidade,
+            estado: data.uf
           }));
+          
+          // Buscar coordenadas após preencher o endereço
+          buscarCoordenadas();
           setMostrarCamposEndereco(true);
         }
-      } else {
-        setMostrarCamposEndereco(true);
-        setEndereco(prev => ({
-          ...prev,
-          rua: termoPesquisa,
-        }));
+      } 
+      // Busca por endereço
+      else {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termo)}, Brasil`
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          setEndereco(prev => ({
+            ...prev,
+            rua: termo,
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon)
+          }));
+          setMostrarMapa(true);
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar endereço:", error);
+      toast.error("Erro ao buscar endereço");
     } finally {
       setBuscando(false);
     }
@@ -461,29 +470,30 @@ export default function OrcamentoPage() {
   // Adicione esta função para verificar se todos os campos necessários estão preenchidos
   const verificarCamposEndereco = () => {
     return (
-      endereco.rua.trim() !== '' &&
-      endereco.numero.trim() !== '' &&
-      endereco.bairro.trim() !== '' &&
-      endereco.cidade.trim() !== '' &&
-      endereco.estado.trim() !== ''
+      endereco.rua !== "" &&
+      endereco.numero !== "" &&
+      endereco.bairro !== "" &&
+      endereco.cidade !== "" &&
+      endereco.estado !== ""
     );
   };
 
   // Função para buscar coordenadas com endereço completo
   const buscarCoordenadas = async () => {
-    const enderecoCompleto = `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, Brasil`;
-    
+    if (!verificarCamposEndereco()) return;
+
     try {
+      const enderecoCompleto = `${endereco.rua}, ${endereco.numero}, ${endereco.bairro}, ${endereco.cidade}, ${endereco.estado}, Brasil`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoCompleto)}&limit=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoCompleto)}`
       );
       const data = await response.json();
-      
+
       if (data && data.length > 0) {
         setEndereco(prev => ({
           ...prev,
           latitude: parseFloat(data[0].lat),
-          longitude: parseFloat(data[0].lon),
+          longitude: parseFloat(data[0].lon)
         }));
         setMostrarMapa(true);
       }

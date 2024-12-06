@@ -1,7 +1,7 @@
 import { CartItem } from "@/store/cart-store";
 
 interface PedidoEmailProps {
-  id: number;
+  id: string;
   data: string;
   email: string;
   nomeEvento: string;
