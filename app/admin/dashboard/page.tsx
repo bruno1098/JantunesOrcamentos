@@ -109,6 +109,9 @@ export default function AdminDashboard() {
     pedidosHoje: 0,
     crescimentoMensal: 0,
   });
+  const [itensPorPagina, setItensPorPagina] = useState("5");
+  const [filtroStatus, setFiltroStatus] = useState("todos");
+  const [ordenacao, setOrdenacao] = useState("mais-recente");
 
   useEffect(() => {
     carregarDados();
@@ -195,6 +198,26 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
     router.push("/admin/login");
+  };
+
+  const getPedidosFiltrados = () => {
+    let pedidosFiltrados = [...pedidos];
+
+    // Filtrar por status
+    if (filtroStatus !== "todos") {
+      pedidosFiltrados = pedidosFiltrados.filter(
+        pedido => pedido.status === filtroStatus
+      );
+    }
+
+    // Ordenar
+    pedidosFiltrados.sort((a, b) => {
+      const dataA = new Date(a.data).getTime();
+      const dataB = new Date(b.data).getTime();
+      return ordenacao === "mais-recente" ? dataB - dataA : dataA - dataB;
+    });
+
+    return pedidosFiltrados;
   };
 
   return (
@@ -315,7 +338,46 @@ export default function AdminDashboard() {
         {/* Tabela de Pedidos Recentes */}
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos Recentes</CardTitle>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle>Pedidos Recentes</CardTitle>
+              <div className="flex flex-wrap gap-4">
+                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os Status</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Em Análise">Em Análise</SelectItem>
+                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                    <SelectItem value="Entregue">Entregue</SelectItem>
+                    <SelectItem value="Finalizado">Finalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={ordenacao} onValueChange={setOrdenacao}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mais-recente">Mais Recente</SelectItem>
+                    <SelectItem value="mais-antigo">Mais Antigo</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={itensPorPagina} onValueChange={setItensPorPagina}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Itens por página" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 por página</SelectItem>
+                    <SelectItem value="10">10 por página</SelectItem>
+                    <SelectItem value="20">20 por página</SelectItem>
+                    <SelectItem value="50">50 por página</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -338,19 +400,22 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    pedidos
-                      .slice(0, 5)
+                  ) : getPedidosFiltrados()
+                      .slice(0, parseInt(itensPorPagina))
                       .map((pedido) => (
                         <TabelaPedidoRow
                           key={pedido.id}
                           pedido={pedido}
                           onVerDetalhes={() => router.push(`/admin/pedidos/${pedido.id}`)}
                         />
-                      ))
-                  )}
+                      ))}
                 </tbody>
               </table>
+              {!isLoading && getPedidosFiltrados().length === 0 && (
+                <div className="text-center p-4 text-gray-500">
+                  Nenhum pedido encontrado com os filtros selecionados.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

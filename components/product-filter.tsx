@@ -12,10 +12,13 @@ export function ProductFilter({
   onCategoryChange,
 }: ProductFilterProps) {
   const categories = [
-    { id: "all", name: "Todos" },
+    { id: "all", name: "Todos Produtos" },
     { id: "toalhas", name: "Toalhas de Mesa" },
+    { id: "toalhas-redondas", name: "Toalhas de Mesa Redonda" },
+    { id: "toalhas-quadradas", name: "Toalhas de Mesa Quadrada" },
     { id: "guardanapos", name: "Guardanapos" },
     { id: "trilhos", name: "Trilhos de Mesa" },
+    { id: "mobiliario", name: "Mobiliário" }
   ];
 
   return (
@@ -32,3 +35,4 @@ export function ProductFilter({
     </div>
   );
 }
+

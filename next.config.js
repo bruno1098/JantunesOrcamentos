@@ -3,7 +3,9 @@ const nextConfig = {
   images: {
     domains: [
       'lirp.cdn-website.com',
-      'images.unsplash.com'
+      'images.unsplash.com',
+      'www.dipilatti.com.br',
+      'img-estoquenow.s3.amazonaws.com'
       
     ],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

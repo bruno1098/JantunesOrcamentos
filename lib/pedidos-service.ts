@@ -1,6 +1,6 @@
 import { Pedido } from "@/types/pedido";
 import { db } from "./firebase";
-import { collection, addDoc, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, getDoc, documentId } from "firebase/firestore";
 
 export async function salvarPedido(pedido: Omit<Pedido, 'id'>): Promise<string> {
   try {
@@ -30,18 +30,25 @@ export async function salvarPedido(pedido: Omit<Pedido, 'id'>): Promise<string> 
   }
 }
 
-export async function buscarPedidoPorEmail(email: string): Promise<Pedido[]> {
+export const buscarPedidoPorEmail = async (email: string): Promise<Pedido[]> => {
   try {
     const pedidosRef = collection(db, "pedidos");
+    const emailNormalizado = email.toLowerCase().trim();
+    
+    // Primeiro, vamos fazer uma busca simples sem ordenação
     const q = query(
       pedidosRef, 
-      where("email", "==", email),
-      orderBy("data", "desc") // Ordena por data, mais recentes primeiro
+      where("email", "==", emailNormalizado)
     );
     
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => {
+    if (querySnapshot.empty) {
+      return [];
+    }
+
+    // Mapear os documentos e converter para o tipo Pedido
+    const pedidos = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -57,32 +64,40 @@ export async function buscarPedidoPorEmail(email: string): Promise<Pedido[]> {
         dataAtualizacao: data.dataAtualizacao
       } as Pedido;
     });
+
+    // Ordenar os resultados no lado do cliente
+    return pedidos.sort((a, b) => {
+      const dataA = new Date(a.data).getTime();
+      const dataB = new Date(b.data).getTime();
+      return dataB - dataA; // Ordem decrescente (mais recente primeiro)
+    });
+
   } catch (error) {
     console.error("Erro ao buscar pedidos por email:", error);
     throw error;
   }
-}
+};
 
 export async function buscarPedidoPorId(id: string): Promise<Pedido | null> {
   try {
     console.log("Buscando pedido com ID:", id);
-
-    // Buscar documento diretamente pelo ID
-    const docRef = doc(db, "pedidos", id);
-    const docSnap = await getDoc(docRef);
-
-    console.log("Documento existe?", docSnap.exists());
+    const pedidosRef = collection(db, "pedidos");
+    const q = query(pedidosRef, where(documentId(), "==", id));
     
-    if (!docSnap.exists()) {
-      console.log("Documento não encontrado");
+    const querySnapshot = await getDocs(q);
+    console.log("Resultado da query:", querySnapshot.docs);
+    
+    if (querySnapshot.empty) {
+      console.log("Nenhum pedido encontrado com este ID");
       return null;
     }
 
-    const data = docSnap.data();
-    console.log("Dados do documento:", data);
+    const doc = querySnapshot.docs[0];
+    const data = doc.data();
+    console.log("Dados do pedido:", data);
 
     return {
-      id: docSnap.id,
+      id: doc.id,
       nomeEvento: data.nomeEvento,
       data: data.data,
       dataEntrega: data.dataEntrega,
@@ -90,19 +105,13 @@ export async function buscarPedidoPorId(id: string): Promise<Pedido | null> {
       status: data.status,
       email: data.email,
       endereco: data.endereco,
-      itens: Array.isArray(data.itens) ? data.itens.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        observation: item.observation || '',
-        image: item.image || ''
-      })) : [],
-      mensagem: data.mensagem || '',
-      dataAtualizacao: data.dataAtualizacao || null
+      itens: data.itens,
+      mensagem: data.mensagem,
+      dataAtualizacao: data.dataAtualizacao
     } as Pedido;
 
   } catch (error) {
-    console.error("Erro detalhado ao buscar pedido:", error);
+    console.error("Erro ao buscar pedido por ID:", error);
     throw error;
   }
 }

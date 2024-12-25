@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { buscarPedidoPorEmail, buscarPedidoPorId } from "@/lib/pedidos-service";
-import { motion } from "framer-motion";
 import { Pedido, ItemPedido, Endereco } from "../../types/pedido";
 import {
   Card,
@@ -52,33 +51,51 @@ export default function MeusPedidosPage() {
     }
   }, [buscaAutomatica, busca]);
 
+  const isValidEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleBuscar = async () => {
     if (!busca) {
-      toast.error("Digite um email ou número do pedido");
+      toast.error("Por favor, digite um email");
       return;
     }
 
     setIsLoading(true);
     try {
-      let resultadoFirebase: Pedido[];
+      const emailNormalizado = busca.toLowerCase().trim();
+      console.log('Email sendo buscado:', emailNormalizado);
       
-      if (tipoBusca === "email") {
-        resultadoFirebase = await buscarPedidoPorEmail(busca);
-      } else {
-        const pedido = await buscarPedidoPorId(busca);
-        resultadoFirebase = pedido ? [pedido] : [];
+      // Verificar se é um email válido
+      if (tipoBusca === "email" && !isValidEmail(emailNormalizado)) {
+        toast.error("Email inválido");
+        return;
       }
 
-      setPedidos(resultadoFirebase);
+      // Log antes da chamada ao serviço
+      console.log('Iniciando busca no Firebase...');
       
-      if (resultadoFirebase.length === 0) {
-        toast.error("Nenhum pedido encontrado");
-      } else {
-        toast.success(`${resultadoFirebase.length} pedido(s) encontrado(s)`);
+      const resultadoFirebase = await buscarPedidoPorEmail(emailNormalizado);
+      
+      // Log do resultado
+      console.log('Resultado da busca:', resultadoFirebase);
+
+      if (!resultadoFirebase || resultadoFirebase.length === 0) {
+        console.log('Nenhum pedido encontrado');
+        toast.error("Nenhum pedido encontrado para este email");
+        setPedidos([]);
+        return;
       }
+
+      console.log(`Encontrados ${resultadoFirebase.length} pedidos`);
+      setPedidos(resultadoFirebase);
+      toast.success(`${resultadoFirebase.length} pedido(s) encontrado(s)`);
+
     } catch (error) {
-      console.error("Erro ao buscar pedidos:", error);
-      toast.error("Erro ao buscar pedidos");
+      console.error("Erro detalhado na busca:", error);
+      toast.error("Erro ao buscar pedidos. Tente novamente.");
+      setPedidos([]);
     } finally {
       setIsLoading(false);
     }
@@ -92,44 +109,35 @@ export default function MeusPedidosPage() {
   };
 
   return (
-    <div className="container mx-auto pt-24 pb-8 px-4 md:px-8">
+    <div className="container mx-auto pt-16 pb-8 px-2 sm:px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center md:text-left">Meus Pedidos</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Meus Pedidos</h1>
 
-        <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="bg-white dark:bg-neutral-800 p-4 sm:p-6 rounded-lg shadow-lg mb-6">
+          <div className="flex flex-col gap-3">
             <Button
               variant={tipoBusca === "email" ? "default" : "outline"}
               onClick={() => setTipoBusca("email")}
-              className="flex-1 md:flex-none"
+              className="w-full"
             >
               Buscar por Email
             </Button>
-            <Button
-              variant={tipoBusca === "id" ? "default" : "outline"}
-              onClick={() => setTipoBusca("id")}
-              className="flex-1 md:flex-none"
-            >
-              Buscar por Número do Pedido
-            </Button>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4">
+          
             <Input
               type={tipoBusca === "email" ? "email" : "text"}
               placeholder={tipoBusca === "email" ? "Digite seu email" : "Digite o número do pedido"}
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-1"
+              className="w-full"
             />
             <Button 
               onClick={handleBuscar} 
               disabled={isLoading}
-              className="w-full md:w-auto"
+              className="w-full"
             >
               {isLoading ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <span className="animate-spin">⌛</span>
                   Buscando...
                 </div>
@@ -140,12 +148,12 @@ export default function MeusPedidosPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {pedidos.map((pedido) => (
             <Card key={pedido.id} className="mb-4">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Pedido #{pedido.id}</CardTitle>
+              <CardHeader className="p-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <CardTitle className="text-lg sm:text-xl">Pedido #{pedido.id}</CardTitle>
                   <span className={`px-3 py-1 rounded-full text-sm ${
                     STATUS_COLORS[pedido.status as keyof typeof STATUS_COLORS]
                   }`}>
@@ -153,49 +161,56 @@ export default function MeusPedidosPage() {
                   </span>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-start mb-4">
+              <CardContent className="p-4">
+                <div className="flex flex-col gap-4">
                   <div>
-                    <h2 className="text-xl font-semibold">{pedido.nomeEvento}</h2>
+                    <h2 className="text-lg font-semibold">{pedido.nomeEvento}</h2>
                     <p className="text-sm text-gray-500">
-                      Pedido #{pedido.id} - {new Date(pedido.data).toLocaleDateString()}
+                      {new Date(pedido.data).toLocaleDateString()}
                     </p>
                   </div>
-                </div>
 
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Informações do Evento</h3>
-                    <p>Data de Entrega: {new Date(pedido.dataEntrega).toLocaleDateString()}</p>
-                    <p>Data de Retirada: {new Date(pedido.dataRetirada).toLocaleDateString()}</p>
+                  <div className="grid gap-4">
+                    <div className="bg-gray-50 dark:bg-neutral-900 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm">Informações do Evento</h3>
+                      <p className="text-sm">Data de Entrega: {new Date(pedido.dataEntrega).toLocaleDateString()}</p>
+                      <p className="text-sm">Data de Retirada: {new Date(pedido.dataRetirada).toLocaleDateString()}</p>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-neutral-900 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm">Local do Evento</h3>
+                      <p className="text-sm">{pedido.endereco.rua}</p>
+                      <p className="text-sm">{pedido.endereco.bairro}, {pedido.endereco.cidade} - {pedido.endereco.estado}</p>
+                      <p className="text-sm">CEP: {pedido.endereco.cep}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold mb-2">Local do Evento</h3>
-                    <p>{pedido.endereco.rua}</p>
-                    <p>{pedido.endereco.bairro}, {pedido.endereco.cidade} - {pedido.endereco.estado}</p>
-                    <p>CEP: {pedido.endereco.cep}</p>
+                  <div className="bg-gray-50 dark:bg-neutral-900 p-3 rounded-lg">
+                    <h3 className="font-semibold mb-2 text-sm">Itens do Pedido</h3>
+                    <ul className="space-y-2">
+                      {pedido.itens.map((item: ItemPedido, index) => (
+                        <li key={index} className="text-sm flex items-start gap-2">
+                          <span>•</span>
+                          <span>
+                            {item.name} x {item.quantity}
+                            {item.observation && (
+                              <span className="block text-xs text-gray-500 mt-1">
+                                {item.observation}
+                              </span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Itens do Pedido</h3>
-                  <ul className="list-disc list-inside">
-                    {pedido.itens.map((item: ItemPedido, index) => (
-                      <li key={index}>
-                        {item.name} x {item.quantity}
-                        {item.observation && <span className="text-sm text-gray-500"> - {item.observation}</span>}
-                      </li>
-                    ))}
-                  </ul>
+                  {pedido.mensagem && (
+                    <div className="bg-gray-50 dark:bg-neutral-900 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm">Mensagem</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{pedido.mensagem}</p>
+                    </div>
+                  )}
                 </div>
-
-                {pedido.mensagem && (
-                  <div className="mb-4">
-                    <h3 className="font-semibold mb-2">Mensagem</h3>
-                    <p className="text-gray-600">{pedido.mensagem}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}

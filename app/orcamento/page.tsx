@@ -89,6 +89,44 @@ const SuccessAnimation = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+const SuccessModal = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+    >
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-card p-8 rounded-2xl flex flex-col items-center gap-6 max-w-sm mx-4"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center"
+        >
+          <Check className="w-8 h-8 text-white" />
+        </motion.div>
+
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold">Orçamento Enviado!</h2>
+          <p className="text-muted-foreground">
+            Seu orçamento foi enviado com sucesso. Acompanhe o status do seu pedido.
+          </p>
+        </div>
+
+        <Button 
+          onClick={onClose}
+          className="w-full bg-green-500 hover:bg-green-600"
+        >
+          Ver Meus Pedidos
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 interface Endereco {
   cep: string;
   rua: string;
@@ -232,7 +270,7 @@ export default function OrcamentoPage() {
     
     try {
       setIsSubmitting(true);
-
+      
       // Criar objeto do pedido
       const novoPedido = {
         nomeEvento,
@@ -267,26 +305,31 @@ export default function OrcamentoPage() {
       // Salvar no Firebase
       const pedidoId = await salvarPedido(novoPedido);
 
-      // Enviar emails com o ID como string
+      // Enviar emails
       await Promise.all([
         enviarEmail({
           para: email,
           assunto: `Pedido #${pedidoId} - Confirmação de Orçamento`,
-          html: gerarEmailCliente({ ...novoPedido, id: pedidoId }) // ID como string
+          html: gerarEmailCliente({ ...novoPedido, id: pedidoId })
         }),
         enviarEmail({
           para: 'seu-email@exemplo.com',
           assunto: `Novo Pedido #${pedidoId}`,
-          html: gerarEmailAdmin({ ...novoPedido, id: pedidoId }) // ID como string
+          html: gerarEmailAdmin({ ...novoPedido, id: pedidoId })
         })
       ]);
 
-      // Redirecionar para meus pedidos
-      router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
+      // Primeiro mostrar o modal de sucesso
+      setShowSuccess(true);
+      clearCart(); // Limpa o carrinho
+      
+      // O redirecionamento agora acontece no callback do modal
+      // Remova ou comente esta linha:
+      // router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
 
     } catch (error) {
-      console.error('Erro ao processar pedido:', error);
-      toast.error('Erro ao processar pedido. Tente novamente.');
+      console.error("Erro ao enviar pedido:", error);
+      toast.error("Erro ao enviar pedido. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -568,7 +611,7 @@ export default function OrcamentoPage() {
         <SuccessAnimation 
           onClose={() => {
             setShowSuccess(false);
-            router.push("/meus-pedidos");
+            router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
           }} 
         />
       )}
@@ -818,7 +861,7 @@ export default function OrcamentoPage() {
                               setEnderecoConfirmado(false);
                               setTermoBusca("");
                               toast('Você pode ajustar o endereço manualmente', {
-                                icon: 'ℹ️',
+                                icon: '��️',
                               });
                             }}
                           >
