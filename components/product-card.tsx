@@ -153,7 +153,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
             ) : (
               <>
                 <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="whitespace-nowrap">Adicionar ao Carrinho</span>
+                <span className="whitespace-nowrap">Orçar</span>
               </>
             )}
           </Button>
@@ -280,6 +280,45 @@ export function ProductCard({ product, index }: ProductCardProps) {
             rows={4}
           ></textarea>
         </div>
+        <div className="mt-4 space-y-4 border-t pt-4">
+          <div>
+            <h3 className="font-medium mb-2">Detalhes do Produto</h3>
+            
+            {product.details.cores && (
+              <div className="mb-3">
+                <span className="text-sm font-medium">Cores disponíveis:</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {product.details.cores.map((cor) => (
+                    <span key={cor} className="text-sm px-2 py-1 bg-secondary rounded-md">
+                      {cor}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.details.dimensoes && (
+              <div className="mb-3">
+                <span className="text-sm font-medium">Dimensões:</span>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {Object.entries(product.details.dimensoes).map(([key, value]) => (
+                    <div key={key} className="text-sm">
+                      <span className="capitalize">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.details.material && (
+              <div className="mb-3">
+                <span className="text-sm font-medium">Material:</span>
+                <p className="text-sm mt-1">{product.details.material}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex justify-end space-x-4">
           <Button variant="outline" onClick={() => setIsModalOpen(false)}>
             Cancelar

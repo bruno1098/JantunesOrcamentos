@@ -1,6 +1,14 @@
 import { CartItem } from "@/store/cart-store";
 
-interface PedidoEmailProps {
+export interface EmailItem {
+  id: string;
+  name: string;
+  quantity: number;
+  observation?: string;
+  image?: string;
+}
+
+export interface PedidoEmailProps {
   id: string;
   data: string;
   email: string;
@@ -18,7 +26,7 @@ interface PedidoEmailProps {
   };
   dataEntrega: string;
   dataRetirada: string;
-  itens: CartItem[];
+  itens: EmailItem[];
   mensagem: string;
   status: string;
 }

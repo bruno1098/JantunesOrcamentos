@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { buscarPedidoPorId, atualizarStatusPedido } from "@/lib/pedidos-service";
+import { buscarPedidoPorId, atualizarPedido } from "@/lib/pedidos-service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -72,19 +72,29 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleStatusChange = async (novoStatus: string) => {
-    if (!pedido) return;
-
+  const atualizarStatus = async (novoStatus: string) => {
     try {
-      setAtualizandoStatus(true);
-      await atualizarStatusPedido(pedido.id, novoStatus);
-      setPedido({ ...pedido, status: novoStatus });
+      setIsLoading(true);
+      
+      if (!pedido) {
+        toast.error("Pedido não encontrado");
+        return;
+      }
+
+      await atualizarPedido(pedido.id, {
+        status: novoStatus,
+        dataAtualizacao: new Date().toISOString()
+      });
+
+      // Atualizar o estado local
+      setPedido(prev => prev ? { ...prev, status: novoStatus } : null);
+      
       toast.success("Status atualizado com sucesso!");
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
       toast.error("Erro ao atualizar status");
     } finally {
-      setAtualizandoStatus(false);
+      setIsLoading(false);
     }
   };
 
@@ -142,7 +152,7 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
                 <CardTitle className="text-xl font-bold">Status do Pedido</CardTitle>
                 <Select
                   value={pedido.status}
-                  onValueChange={handleStatusChange}
+                  onValueChange={atualizarStatus}
                   disabled={atualizandoStatus}
                 >
                   <SelectTrigger className="w-[180px]">

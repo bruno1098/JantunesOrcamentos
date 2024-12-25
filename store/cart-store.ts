@@ -4,12 +4,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product } from '@/data/products';
 
-export interface CartItem extends Omit<Product, 'id'> {
+export interface CartItem {
   id: string;
+  name: string;
   quantity: number;
   observation?: string;
   image: string;
+  category: string;
+  description: string;
 }
+
+const defaultImage = "https://via.placeholder.com/300";
 
 interface CartState {
   items: CartItem[];
@@ -40,7 +45,8 @@ export const useCartStore = create<CartState>()(
           
           const newItem: CartItem = {
             ...item,
-            id: itemId
+            id: itemId,
+            image: item.image || defaultImage
           };
           
           return { items: [...state.items, newItem] };

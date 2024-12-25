@@ -8,8 +8,8 @@ export default async function handler(
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
-  const apiKey = process.env.ABSTRACT_API_KEY;
-   
+ const apiKey = process.env.ABSTRACT_API_KEY;
+ 
   const { email } = req.body;
 
   if (!apiKey) {

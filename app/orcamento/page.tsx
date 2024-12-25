@@ -175,6 +175,7 @@ export default function OrcamentoPage() {
   const [mostrarAnimacaoOk, setMostrarAnimacaoOk] = useState(false);
   const [camposComErro, setCamposComErro] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [pedidoId, setPedidoId] = useState<string>("");
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -268,64 +269,64 @@ export default function OrcamentoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!dataEntrega || !dataRetirada) {
+      toast.error("Por favor, selecione as datas de entrega e retirada");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
-      // Criar objeto do pedido
+
+      const emailItems = items.map(item => ({
+        id: item.id.toString(),
+        name: item.name,
+        quantity: item.quantity,
+        observation: item.observation,
+        image: item.image
+      }));
+
       const novoPedido = {
         nomeEvento,
         data: new Date().toISOString(),
-        dataEntrega: dataEntrega?.toISOString() || '',
-        dataRetirada: dataRetirada?.toISOString() || '',
-        status: 'Pendente',
+        dataEntrega: dataEntrega.toISOString(),
+        dataRetirada: dataRetirada.toISOString(),
+        status: "Pendente",
         email,
         endereco: {
+          cep,
           rua: endereco.rua,
           numero: endereco.numero,
-          complemento: endereco.complemento,
+          complemento: endereco.complemento || "",
           bairro: endereco.bairro,
           cidade: endereco.cidade,
           estado: endereco.estado,
-          cep: endereco.cep,
           latitude: endereco.latitude,
           longitude: endereco.longitude
         },
-        itens: items.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          observation: item.observation,
-          image: item.image,
-          category: item.category,
-          description: item.description
-        })),
+        itens: emailItems,
         mensagem
       };
 
-      // Salvar no Firebase
-      const pedidoId = await salvarPedido(novoPedido);
+      // Salvar pedido e receber o ID gerado
+      const novoId = await salvarPedido(novoPedido);
+      setPedidoId(novoId);
 
-      // Enviar emails
+      // Enviar emails com o mesmo ID
       await Promise.all([
         enviarEmail({
           para: email,
-          assunto: `Pedido #${pedidoId} - Confirmação de Orçamento`,
-          html: gerarEmailCliente({ ...novoPedido, id: pedidoId })
+          assunto: `Pedido #${novoId} - Confirmação de Orçamento`,
+          html: gerarEmailCliente({ ...novoPedido, id: novoId })
         }),
         enviarEmail({
           para: 'seu-email@exemplo.com',
-          assunto: `Novo Pedido #${pedidoId}`,
-          html: gerarEmailAdmin({ ...novoPedido, id: pedidoId })
+          assunto: `Novo Pedido #${novoId}`,
+          html: gerarEmailAdmin({ ...novoPedido, id: novoId })
         })
       ]);
 
-      // Primeiro mostrar o modal de sucesso
       setShowSuccess(true);
-      clearCart(); // Limpa o carrinho
-      
-      // O redirecionamento agora acontece no callback do modal
-      // Remova ou comente esta linha:
-      // router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
+      clearCart();
 
     } catch (error) {
       console.error("Erro ao enviar pedido:", error);
@@ -861,7 +862,7 @@ export default function OrcamentoPage() {
                               setEnderecoConfirmado(false);
                               setTermoBusca("");
                               toast('Você pode ajustar o endereço manualmente', {
-                                icon: '��️',
+                                icon: '️',
                               });
                             }}
                           >
