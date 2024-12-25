@@ -175,7 +175,7 @@ export default function OrcamentoPage() {
   const [mostrarAnimacaoOk, setMostrarAnimacaoOk] = useState(false);
   const [camposComErro, setCamposComErro] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [pedidoId, setPedidoId] = useState<string>("");
+  const [metodoEndereco, setMetodoEndereco] = useState<'cep' | 'manual'>('cep');
 
   const getDataMinima = () => {
     const hoje = new Date();
@@ -269,64 +269,64 @@ export default function OrcamentoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!dataEntrega || !dataRetirada) {
-      toast.error("Por favor, selecione as datas de entrega e retirada");
-      return;
-    }
-
     try {
       setIsSubmitting(true);
-
-      const emailItems = items.map(item => ({
-        id: item.id.toString(),
-        name: item.name,
-        quantity: item.quantity,
-        observation: item.observation,
-        image: item.image
-      }));
-
+      
+      // Criar objeto do pedido
       const novoPedido = {
         nomeEvento,
         data: new Date().toISOString(),
-        dataEntrega: dataEntrega.toISOString(),
-        dataRetirada: dataRetirada.toISOString(),
-        status: "Pendente",
+        dataEntrega: dataEntrega?.toISOString() || '',
+        dataRetirada: dataRetirada?.toISOString() || '',
+        status: 'Pendente',
         email,
         endereco: {
-          cep,
           rua: endereco.rua,
           numero: endereco.numero,
-          complemento: endereco.complemento || "",
+          complemento: endereco.complemento,
           bairro: endereco.bairro,
           cidade: endereco.cidade,
           estado: endereco.estado,
+          cep: endereco.cep,
           latitude: endereco.latitude,
           longitude: endereco.longitude
         },
-        itens: emailItems,
+        itens: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          observation: item.observation,
+          image: item.image,
+          category: item.category,
+          description: item.description
+        })),
         mensagem
       };
 
-      // Salvar pedido e receber o ID gerado
-      const novoId = await salvarPedido(novoPedido);
-      setPedidoId(novoId);
+      // Salvar no Firebase
+      const pedidoId = await salvarPedido(novoPedido);
 
-      // Enviar emails com o mesmo ID
+      // Enviar emails
       await Promise.all([
         enviarEmail({
           para: email,
-          assunto: `Pedido #${novoId} - Confirmação de Orçamento`,
-          html: gerarEmailCliente({ ...novoPedido, id: novoId })
+          assunto: `Pedido #${pedidoId} - Confirmação de Orçamento`,
+          html: gerarEmailCliente({ ...novoPedido, id: pedidoId })
         }),
         enviarEmail({
           para: 'seu-email@exemplo.com',
-          assunto: `Novo Pedido #${novoId}`,
-          html: gerarEmailAdmin({ ...novoPedido, id: novoId })
+          assunto: `Novo Pedido #${pedidoId}`,
+          html: gerarEmailAdmin({ ...novoPedido, id: pedidoId })
         })
       ]);
 
+      // Primeiro mostrar o modal de sucesso
       setShowSuccess(true);
-      clearCart();
+      clearCart(); // Limpa o carrinho
+      
+      // O redirecionamento agora acontece no callback do modal
+      // Remova ou comente esta linha:
+      // router.push(`/meus-pedidos?email=${encodeURIComponent(email)}&redirect=true`);
 
     } catch (error) {
       console.error("Erro ao enviar pedido:", error);
@@ -458,43 +458,53 @@ export default function OrcamentoPage() {
 
     setBuscando(true);
     try {
-      const termoPesquisa = termo.replace(/[^\w\s]/gi, '').trim();
+      const termoPesquisa = termo.trim();
       
-      // Busca por CEP
-      if (/^\d{8}$/.test(termoPesquisa)) {
-        const response = await fetch(`https://viacep.com.br/ws/${termoPesquisa}/json/`);
-        const data = await response.json();
-        
-        if (!data.erro) {
-          setEndereco(prev => ({
-            ...prev,
-            cep: termoPesquisa,
-            rua: data.logradouro,
-            bairro: data.bairro,
-            cidade: data.localidade,
-            estado: data.uf
-          }));
+      // Busca por CEP (remove caracteres não numéricos)
+      if (/^\d+$/.test(termoPesquisa.replace(/\D/g, ''))) {
+        const cepLimpo = termoPesquisa.replace(/\D/g, '');
+        if (cepLimpo.length === 8) {
+          const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+          const data = await response.json();
           
-          // Buscar coordenadas após preencher o endereço
-          buscarCoordenadas();
-          setMostrarCamposEndereco(true);
+          if (!data.erro) {
+            setEndereco(prev => ({
+              ...prev,
+              cep: cepLimpo,
+              rua: data.logradouro,
+              bairro: data.bairro,
+              cidade: data.localidade,
+              estado: data.uf
+            }));
+            setMostrarCamposEndereco(true);
+          }
         }
       } 
       // Busca por endereço
       else {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termo)}, Brasil`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoPesquisa)}, Brasil&addressdetails=1`
         );
         const data = await response.json();
 
         if (data && data.length > 0) {
+          const enderecoPrincipal = data[0];
+          const detalhes = enderecoPrincipal.address;
+
           setEndereco(prev => ({
             ...prev,
-            rua: termo,
-            latitude: parseFloat(data[0].lat),
-            longitude: parseFloat(data[0].lon)
+            rua: detalhes.road || detalhes.street || termoPesquisa,
+            bairro: detalhes.suburb || detalhes.neighbourhood || '',
+            cidade: detalhes.city || detalhes.town || detalhes.municipality || '',
+            estado: detalhes.state_code || detalhes.state || '',
+            latitude: parseFloat(enderecoPrincipal.lat),
+            longitude: parseFloat(enderecoPrincipal.lon)
           }));
-          setMostrarMapa(true);
+          
+          setMostrarCamposEndereco(true);
+          if (verificarCamposEndereco()) {
+            setMostrarMapa(true);
+          }
         }
       }
     } catch (error) {
@@ -527,6 +537,7 @@ export default function OrcamentoPage() {
     if (!verificarCamposEndereco()) return;
 
     try {
+      setIsLoading(true);
       const enderecoCompleto = `${endereco.rua}, ${endereco.numero}, ${endereco.bairro}, ${endereco.cidade}, ${endereco.estado}, Brasil`;
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoCompleto)}`
@@ -540,9 +551,15 @@ export default function OrcamentoPage() {
           longitude: parseFloat(data[0].lon)
         }));
         setMostrarMapa(true);
+        return true;
       }
+      return false;
     } catch (error) {
       console.error("Erro ao buscar coordenadas:", error);
+      toast.error("Erro ao buscar localização no mapa");
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -606,6 +623,43 @@ export default function OrcamentoPage() {
     ${camposComErro.includes(fieldName) ? 'border-red-500 focus:border-red-500' : ''}
   `;
 
+  const SeletorEndereco = () => {
+    return (
+      <div className="flex flex-col gap-4 mb-6">
+        <h3 className="text-md font-semibold">Como você prefere informar o endereço?</h3>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setMetodoEndereco('cep')}
+            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+              metodoEndereco === 'cep' 
+                ? 'border-primary bg-primary/10' 
+                : 'border-neutral-200 hover:border-primary/50'
+            }`}
+          >
+            <h4 className="font-medium mb-2">Buscar por CEP</h4>
+            <p className="text-sm text-muted-foreground">
+              Digite o CEP e os campos serão preenchidos automaticamente
+            </p>
+          </button>
+
+          <button
+            onClick={() => setMetodoEndereco('manual')}
+            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+              metodoEndereco === 'manual' 
+                ? 'border-primary bg-primary/10' 
+                : 'border-neutral-200 hover:border-primary/50'
+            }`}
+          >
+            <h4 className="font-medium mb-2">Digite o endereço</h4>
+            <p className="text-sm text-muted-foreground">
+              Preencha todos os campos do endereço manualmente
+            </p>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <main className="min-h-screen bg-background pt-24">
       {showSuccess && (
@@ -663,69 +717,36 @@ export default function OrcamentoPage() {
                 </div>
 
                 <div className="mb-6">
-                  <label className="block mb-2 font-medium">Localização do Evento</label>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Digite o CEP ou nome da rua"
-                        className="w-full p-3 border rounded-lg bg-background"
-                        value={termoBusca}
-                        onChange={(e) => {
-                          const valor = e.target.value;
-                          setTermoBusca(valor);
-                          setEnderecoConfirmado(false);
-                          if (!endereco.cep) {
-                            buscarEndereco(valor);
-                          }
-                        }}
-                      />
-                      {buscando && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-                        </div>
-                      )}
-                    </div>
+                  <label className="block mb-2 font-medium text-lg">Localização do Evento</label>
+                  <div className="space-y-6">
+                    <SeletorEndereco />
 
-                    {mostrarCamposEndereco && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        {endereco.cep ? (
-                          <>
-                            <div className="grid grid-cols-1 gap-4">
-                              <input
-                                type="text"
-                                value={endereco.rua}
-                                readOnly
-                                className="w-full p-3 border rounded-lg bg-muted"
-                              />
-                              <div className="grid grid-cols-3 gap-2">
-                                <input
-                                  type="text"
-                                  value={endereco.bairro}
-                                  readOnly
-                                  className="w-full p-3 border rounded-lg bg-muted"
-                                />
-                                <input
-                                  type="text"
-                                  value={endereco.cidade}
-                                  readOnly
-                                  className="w-full p-3 border rounded-lg bg-muted"
-                                />
-                                <input
-                                  type="text"
-                                  value={endereco.estado}
-                                  readOnly
-                                  className="w-full p-3 border rounded-lg bg-muted"
-                                />
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
+                    {metodoEndereco === 'cep' ? (
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Digite o CEP"
+                          value={cep}
+                          onChange={(e) => {
+                            const valor = e.target.value.replace(/\D/g, '');
+                            if (valor.length <= 8) {
+                              setCep(valor);
+                              if (valor.length === 8) {
+                                buscarCep(valor);
+                              }
+                            }
+                          }}
+                          className="w-full p-3 border rounded-lg bg-background"
+                          maxLength={8}
+                        />
+                        {endereco.rua && (
+                          <div className="space-y-4 animate-fadeIn">
+                            <input
+                              type="text"
+                              value={endereco.rua}
+                              readOnly
+                              className="w-full p-3 border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+                            />
                             <div className="grid grid-cols-2 gap-4">
                               <input
                                 type="text"
@@ -750,137 +771,109 @@ export default function OrcamentoPage() {
                                 className="w-full p-3 border rounded-lg bg-background"
                               />
                             </div>
+                            <input
+                              type="text"
+                              value={endereco.bairro}
+                              readOnly
+                              className="w-full p-3 border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+                            />
                             <div className="grid grid-cols-2 gap-4">
                               <input
                                 type="text"
-                                placeholder="Bairro"
-                                value={endereco.bairro}
-                                onChange={(e) => {
-                                  setEndereco(prev => ({ ...prev, bairro: e.target.value }));
-                                  if (verificarCamposEndereco()) {
-                                    buscarCoordenadas();
-                                  }
-                                }}
-                                className="w-full p-3 border rounded-lg bg-background"
+                                value={endereco.cidade}
+                                readOnly
+                                className="w-full p-3 border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
                               />
                               <input
                                 type="text"
-                                placeholder="Cidade"
-                                value={endereco.cidade}
-                                onChange={(e) => {
-                                  setEndereco(prev => ({ ...prev, cidade: e.target.value }));
-                                  if (verificarCamposEndereco()) {
-                                    buscarCoordenadas();
-                                  }
-                                }}
-                                className="w-full p-3 border rounded-lg bg-background"
+                                value={endereco.estado}
+                                readOnly
+                                className="w-full p-3 border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
                               />
                             </div>
-                            <input
-                              type="text"
-                              placeholder="Estado (UF)"
-                              value={endereco.estado}
-                              onChange={(e) => {
-                                const valor = e.target.value.toUpperCase();
-                                setEndereco(prev => ({ ...prev, estado: valor }));
-                                if (verificarCamposEndereco()) {
-                                  buscarCoordenadas();
-                                }
-                              }}
-                              className="w-full p-3 border rounded-lg bg-background"
-                              maxLength={2}
-                            />
-                          </>
-                        )}
-
-                        {endereco.cep && (
-                          <div className="grid grid-cols-2 gap-4">
-                            <input
-                              type="text"
-                              placeholder="Número"
-                              value={endereco.numero}
-                              onChange={(e) => {
-                                setEndereco(prev => ({ ...prev, numero: e.target.value }));
-                                if (verificarCamposEndereco()) {
-                                  buscarCoordenadas();
-                                }
-                              }}
-                              className="w-full p-3 border rounded-lg bg-background"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Complemento (opcional)"
-                              value={endereco.complemento}
-                              onChange={(e) => setEndereco(prev => ({ 
-                                ...prev, 
-                                complemento: e.target.value 
-                              }))}
-                              className="w-full p-3 border rounded-lg bg-background"
-                            />
                           </div>
                         )}
-                      </motion.div>
-                    )}
-
-                    {mostrarMapa && endereco.latitude && endereco.longitude && !enderecoConfirmado && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        <div className="text-center text-sm text-muted-foreground mb-2">
-                          Seria este o local do seu evento?
-                        </div>
-                        <div className="h-48 rounded-lg overflow-hidden border">
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            scrolling="no"
-                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${
-                              endereco.longitude - 0.01
-                            },${endereco.latitude - 0.01},${
-                              endereco.longitude + 0.01
-                            },${endereco.latitude + 0.01
-                            }&layer=mapnik&marker=${endereco.latitude},${endereco.longitude}`}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Rua"
+                          value={endereco.rua}
+                          onChange={(e) => setEndereco(prev => ({ ...prev, rua: e.target.value }))}
+                          className="w-full p-3 border rounded-lg bg-background"
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <input
+                            type="text"
+                            placeholder="Número"
+                            value={endereco.numero}
+                            onChange={(e) => setEndereco(prev => ({ ...prev, numero: e.target.value }))}
+                            className="w-full p-3 border rounded-lg bg-background"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Complemento (opcional)"
+                            value={endereco.complemento}
+                            onChange={(e) => setEndereco(prev => ({ ...prev, complemento: e.target.value }))}
+                            className="w-full p-3 border rounded-lg bg-background"
                           />
                         </div>
-                        <div className="flex gap-2 justify-center">
-                          <Button
-                            onClick={() => {
-                              setEnderecoConfirmado(true);
-                              toast.success('Localização confirmada!');
+                        <input
+                          type="text"
+                          placeholder="Bairro"
+                          value={endereco.bairro}
+                          onChange={(e) => setEndereco(prev => ({ ...prev, bairro: e.target.value }))}
+                          className="w-full p-3 border rounded-lg bg-background"
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <input
+                            type="text"
+                            placeholder="Cidade"
+                            value={endereco.cidade}
+                            onChange={(e) => setEndereco(prev => ({ ...prev, cidade: e.target.value }))}
+                            className="w-full p-3 border rounded-lg bg-background"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Estado"
+                            value={endereco.estado}
+                            onChange={(e) => {
+                              const valor = e.target.value.toUpperCase();
+                              setEndereco(prev => ({ ...prev, estado: valor }));
                             }}
-                            className="bg-green-500 hover:bg-green-600"
-                          >
-                            Sim, é aqui!
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setMostrarMapa(false);
-                              setEnderecoConfirmado(false);
-                              setTermoBusca("");
-                              toast('Você pode ajustar o endereço manualmente', {
-                                icon: '️',
-                              });
-                            }}
-                          >
-                            Não, preciso ajustar
-                          </Button>
+                            className="w-full p-3 border rounded-lg bg-background"
+                            maxLength={2}
+                          />
                         </div>
-                      </motion.div>
+                      </div>
                     )}
 
-                    {enderecoConfirmado && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 text-green-600 mt-2"
-                      >
-                        <Check size={20} />
-                        <span className="text-sm">Endereço confirmado!</span>
-                      </motion.div>
+                    {endereco.cep && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Número"
+                          value={endereco.numero}
+                          onChange={(e) => {
+                            setEndereco(prev => ({ ...prev, numero: e.target.value }));
+                            if (verificarCamposEndereco()) {
+                              buscarCoordenadas();
+                            }
+                          }}
+                          className="w-full p-3 border rounded-lg bg-background"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Complemento (opcional)"
+                          value={endereco.complemento}
+                          onChange={(e) => setEndereco(prev => ({ 
+                            ...prev, 
+                            complemento: e.target.value 
+                          }))}
+                          className="w-full p-3 border rounded-lg bg-background"
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1099,6 +1092,64 @@ export default function OrcamentoPage() {
           </div>
         </motion.div>
       </div>
+
+      {mostrarMapa && endereco.latitude && endereco.longitude && !enderecoConfirmado && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50"
+        >
+          <div className="bg-background rounded-lg max-w-2xl w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Confirme a Localização</h3>
+            
+            <div className="text-center text-sm text-muted-foreground mb-2">
+              Seria este o local do seu evento?
+            </div>
+
+            <div className="h-[300px] rounded-lg overflow-hidden border">
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                scrolling="no"
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${
+                  endereco.longitude - 0.01
+                },${endereco.latitude - 0.01},${
+                  endereco.longitude + 0.01
+                },${endereco.latitude + 0.01
+                }&layer=mapnik&marker=${endereco.latitude},${endereco.longitude}`}
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={() => {
+                  setEnderecoConfirmado(true);
+                  setMostrarMapa(false);
+                  toast.success('Localização confirmada!');
+                }}
+                className="flex-1 bg-green-500 hover:bg-green-600"
+              >
+                Sim, é aqui!
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMostrarMapa(false);
+                  setEnderecoConfirmado(false);
+                  setTermoBusca("");
+                  toast('Você pode ajustar o endereço manualmente', {
+                    icon: '️ℹ️',
+                  });
+                }}
+                className="flex-1"
+              >
+                Não, preciso ajustar
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </main>
   );
 } 

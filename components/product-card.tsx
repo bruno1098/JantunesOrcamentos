@@ -272,13 +272,24 @@ export function ProductCard({ product, index }: ProductCardProps) {
           />
         </div>
         <div className="mb-4">
-          <label className="block mb-2">Observações:</label>
-          <textarea
-            value={observation}
-            onChange={(e) => setObservation(e.target.value)}
-            className="w-full p-2 border rounded dark:bg-neutral-800 dark:border-neutral-700"
-            rows={4}
-          ></textarea>
+          <label className="block mb-2 font-medium">Observações:</label>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Nos ajude a entender melhor suas necessidades:
+            </p>
+            <ul className="text-sm text-muted-foreground mb-2 space-y-1">
+              <li>• Qual o tamanho da sua mesa?</li>
+              <li>• Tem preferência de cores?</li>
+              <li>• Precisa de adaptações específicas?</li>
+            </ul>
+            <textarea
+              value={observation}
+              onChange={(e) => setObservation(e.target.value)}
+              placeholder="Ex: Preciso para uma mesa de 2,5m x 0,80m. Gostaria em tons pastéis..."
+              className="w-full p-3 border rounded dark:bg-neutral-800 dark:border-neutral-700"
+              rows={4}
+            ></textarea>
+          </div>
         </div>
         <div className="mt-4 space-y-4 border-t pt-4">
           <div>
