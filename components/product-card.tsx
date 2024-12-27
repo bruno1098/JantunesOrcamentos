@@ -118,6 +118,46 @@ export function ProductCard({ product, index }: ProductCardProps) {
     }
   };
 
+  const renderDimensoes = (dimensoes: any) => {
+    if ('mesa' in dimensoes) {
+      return (
+        <div className="space-y-2">
+          <p className="font-medium">Mesa:</p>
+          <ul className="list-disc list-inside pl-2">
+            <li>Comprimento: {dimensoes.mesa.comprimento}</li>
+            <li>Largura: {dimensoes.mesa.largura}</li>
+            <li>Altura: {dimensoes.mesa.altura}</li>
+          </ul>
+          {dimensoes.cadeira && (
+            <>
+              <p className="font-medium mt-2">Cadeira:</p>
+              <ul className="list-disc list-inside pl-2">
+                <li>Altura: {dimensoes.cadeira.altura}</li>
+                <li>Largura: {dimensoes.cadeira.largura}</li>
+                <li>Profundidade: {dimensoes.cadeira.profundidade}</li>
+              </ul>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // Para produtos que têm dimensões simples (como toalhas)
+    if ('diametro' in dimensoes) {
+      return <p>Diâmetro: {dimensoes.diametro}</p>;
+    }
+
+    if ('comprimento' in dimensoes && 'largura' in dimensoes) {
+      return (
+        <p>
+          {dimensoes.comprimento} x {dimensoes.largura}
+        </p>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <>
       <motion.div
@@ -309,15 +349,9 @@ export function ProductCard({ product, index }: ProductCardProps) {
             )}
 
             {product.details.dimensoes && (
-              <div className="mb-3">
-                <span className="text-sm font-medium">Dimensões:</span>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  {Object.entries(product.details.dimensoes).map(([key, value]) => (
-                    <div key={key} className="text-sm">
-                      <span className="capitalize">{key}:</span> {value}
-                    </div>
-                  ))}
-                </div>
+              <div className="mb-4">
+                <h3 className="font-medium mb-2">Dimensões:</h3>
+                {renderDimensoes(product.details.dimensoes)}
               </div>
             )}
 
