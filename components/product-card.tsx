@@ -11,6 +11,7 @@ import { useState, useRef, useEffect } from "react";
 import Modal from "react-modal";
 import { getCartIconPosition } from "@/utils/dom-utils";
 import { X } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -47,6 +48,25 @@ export function ProductCard({ product, index }: ProductCardProps) {
     addItem({ ...product, quantity, observation });
     setIsAdding(false);
     setIsModalOpen(false);
+    
+    toast.success(`${product.name} adicionado ao carrinho!`, {
+      duration: 3000,
+      position: 'top-right',
+      style: {
+        marginTop: '30px',
+        background: 'var(--background)',
+        color: 'var(--foreground)',
+        border: '1px solid var(--border)',
+        padding: '1px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+        borderRadius: '8px',
+        fontSize: '19px',
+        fontWeight: '900',
+        backgroundColor: 'var(--background)',
+      },
+      className: 'dark:bg-neutral-800 dark:text-white',
+      icon: '🛍️',
+    });
     
     setQuantity(1);
     setObservation("");
@@ -349,9 +369,15 @@ export function ProductCard({ product, index }: ProductCardProps) {
             )}
 
             {product.details.dimensoes && (
-              <div className="mb-4">
-                <h3 className="font-medium mb-2">Dimensões:</h3>
-                {renderDimensoes(product.details.dimensoes)}
+              <div className="mb-3">
+                <span className="text-sm font-medium">Dimensões:</span>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {Object.entries(product.details.dimensoes).map(([key, value]) => (
+                    <div key={key} className="text-sm">
+                      <span className="capitalize">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
