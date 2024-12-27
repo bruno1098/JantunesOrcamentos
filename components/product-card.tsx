@@ -57,7 +57,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
         background: 'var(--background)',
         color: 'var(--foreground)',
         border: '1px solid var(--border)',
-        padding: '1px',
+        padding: '16px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         borderRadius: '8px',
         fontSize: '19px',
@@ -371,12 +371,8 @@ export function ProductCard({ product, index }: ProductCardProps) {
             {product.details.dimensoes && (
               <div className="mb-3">
                 <span className="text-sm font-medium">Dimensões:</span>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  {Object.entries(product.details.dimensoes).map(([key, value]) => (
-                    <div key={key} className="text-sm">
-                      <span className="capitalize">{key}:</span> {value}
-                    </div>
-                  ))}
+                <div className="mt-1">
+                  {renderDimensoes(product.details.dimensoes)}
                 </div>
               </div>
             )}
