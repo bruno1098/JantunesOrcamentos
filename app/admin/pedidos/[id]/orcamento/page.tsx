@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrcamentoPDF } from "@/components/orcamento-pdf";
 import { pdf } from "@react-pdf/renderer";
+import Image from "next/image";
 
 interface ItemOrcamento extends ItemPedido {
   valorUnitario: number;
@@ -95,65 +96,87 @@ export default function OrcamentoPage({ params }: { params: { id: string } }) {
 
   const gerarPDF = async () => {
     try {
-      // Verificar dados
+      console.log("Iniciando processo de geração do PDF");
+      
       if (!pedido || !orcamento) {
+        console.error("Dados incompletos:", { pedido, orcamento });
         toast.error("Dados do orçamento incompletos");
         return;
       }
 
-      // Atualizar valorTotal antes de gerar o PDF
-      setOrcamento(prev => ({
-        ...prev,
-        valorTotal: calcularTotal()
-      }));
-
-      console.log("Iniciando geração do PDF...");
+      const valorTotalCalculado = calcularTotal();
       
-      // Tentar gerar o PDF com try/catch específico
-      let blob;
+      // Criar uma cópia atualizada do orçamento com as respostas do admin
+      const orcamentoAtualizado = {
+        ...orcamento,
+        valorTotal: valorTotalCalculado,
+        itens: orcamento.itens.map(item => ({
+          ...item,
+          adminResponse: pedido.itens.find(i => i.id === item.id)?.adminResponse
+        }))
+      };
+
+      // Criar o componente PDF com os dados atualizados
+      let pdfContent;
       try {
-        blob = await pdf(
+        console.log("Criando componente PDF");
+        pdfContent = (
           <OrcamentoPDF 
-            orcamento={{
-              ...orcamento,
-              valorTotal: calcularTotal()
-            }} 
+            orcamento={orcamentoAtualizado}
             pedido={pedido}
           />
-        ).toBlob();
-        console.log("Blob do PDF gerado com sucesso");
-      } catch (pdfError) {
-        console.error("Erro na geração do blob do PDF:", pdfError);
-        throw pdfError;
+        );
+        console.log("Componente PDF criado com sucesso");
+      } catch (componentError) {
+        console.error("Erro ao criar componente PDF:", componentError);
+        throw componentError;
       }
 
-      console.log("Iniciando download...");
-
+      // Gerar o blob com try/catch específico
+      let blob;
       try {
+        console.log("Gerando blob do PDF");
+        blob = await pdf(pdfContent).toBlob();
+        console.log("Blob gerado com sucesso:", blob);
+      } catch (blobError) {
+        console.error("Erro ao gerar blob:", blobError);
+        throw blobError;
+      }
+
+      // Criar e disparar o download com try/catch específico
+      try {
+        console.log("Iniciando processo de download");
         const url = URL.createObjectURL(blob);
+        console.log("URL criada:", url);
+
+        // Tentar abrir em nova aba primeiro
+        window.open(url, '_blank');
+        
+        // Backup: tentar download direto
         const link = document.createElement('a');
         link.href = url;
         link.download = `orcamento-${pedido.id}.pdf`;
-        
-        // Forçar o download
+        link.target = '_blank';
         document.body.appendChild(link);
-        console.log("Link criado, iniciando download...");
+        
+        console.log("Link criado, tentando download");
         link.click();
         
-        // Pequeno delay antes de limpar
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        console.log("Download concluído");
-        
+        // Limpar recursos
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          console.log("Recursos limpos");
+        }, 1000);
+
+        console.log("Processo de download concluído");
         toast.success("PDF gerado com sucesso!");
       } catch (downloadError) {
         console.error("Erro no processo de download:", downloadError);
         throw downloadError;
       }
     } catch (error) {
-      console.error("Erro detalhado ao gerar PDF:", error);
+      console.error("Erro geral na geração do PDF:", error);
       toast.error("Erro ao gerar o PDF. Tente novamente.");
     }
   };
@@ -182,38 +205,87 @@ export default function OrcamentoPage({ params }: { params: { id: string } }) {
               {/* Tabela de Itens */}
               <div>
                 <h3 className="font-semibold mb-4">Itens do Pedido</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Item</th>
-                        <th className="text-center p-2">Quantidade</th>
-                        <th className="text-right p-2">Valor Unitário</th>
-                        <th className="text-right p-2">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orcamento.itens.map((item) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="p-2">{item.name}</td>
-                          <td className="text-center p-2">{item.quantity}</td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.valorUnitario}
-                              onChange={(e) => atualizarValorItem(item.id, Number(e.target.value))}
-                              className="w-32 text-right"
-                            />
-                          </td>
-                          <td className="text-right p-2">
-                            R$ {(item.valorUnitario * item.quantity).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-4">
+                  {pedido.itens.map((item, index) => (
+                    <div key={index} className="bg-secondary/50 rounded-lg p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-20 h-20 relative rounded-md overflow-hidden">
+                          <Image
+                            src={item.image || '/placeholder.jpg'}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          {/* Cabeçalho do Item */}
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h4 className="font-medium text-lg">{item.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Quantidade solicitada: <span className="font-medium">{item.quantity} {item.quantity > 1 ? 'unidades' : 'unidade'}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Grid de Valores */}
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="text-sm font-medium block mb-1.5">Valor Unitário:</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={orcamento.itens.find(i => i.id === item.id)?.valorUnitario || ''}
+                                  onChange={(e) => atualizarValorItem(item.id, Number(e.target.value))}
+                                  className="pl-8 font-medium"
+                                  placeholder="0,00"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium block mb-1.5">Subtotal:</label>
+                              <div className="bg-background p-2.5 rounded-md border">
+                                <span className="font-medium">
+                                  R$ {((orcamento.itens.find(i => i.id === item.id)?.valorUnitario || 0) * item.quantity).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Observações e Respostas - Só aparece se houver observação */}
+                          {item.observation && (
+                            <div className="mt-4 space-y-3">
+                              <div className="bg-secondary rounded-md p-3">
+                                <p className="text-sm font-medium mb-1">Observação do Cliente:</p>
+                                <p className="text-sm text-muted-foreground">{item.observation}</p>
+                              </div>
+
+                              <div>
+                                <label className="text-sm font-medium block mb-1.5">Resposta à Observação:</label>
+                                <textarea
+                                  value={item.adminResponse || ''}
+                                  onChange={(e) => {
+                                    const newItens = [...pedido.itens];
+                                    newItens[index] = {
+                                      ...newItens[index],
+                                      adminResponse: e.target.value
+                                    };
+                                    setPedido({ ...pedido, itens: newItens });
+                                  }}
+                                  placeholder="Adicione uma resposta para a observação do cliente..."
+                                  className="w-full p-2.5 text-sm rounded-md border bg-background min-h-[80px]"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

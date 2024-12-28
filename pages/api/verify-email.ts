@@ -9,7 +9,6 @@ export default async function handler(
   }
 
  const apiKey = process.env.ABSTRACT_API_KEY;
- 
   const { email } = req.body;
 
   if (!apiKey) {

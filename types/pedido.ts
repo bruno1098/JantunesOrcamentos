@@ -4,6 +4,7 @@ export interface ItemPedido {
   quantity: number;
   observation?: string;
   image?: string;
+  adminResponse?: string;
 }
 
 export interface Endereco {

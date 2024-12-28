@@ -81,6 +81,7 @@ interface DashboardStats {
   pedidosPendentes: number;
   pedidosHoje: number;
   crescimentoMensal: number;
+  totalProdutos: number;
 }
 
 const CORES_GRAFICO = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'];
@@ -108,6 +109,7 @@ export default function AdminDashboard() {
     pedidosPendentes: 0,
     pedidosHoje: 0,
     crescimentoMensal: 0,
+    totalProdutos: 0
   });
   const [itensPorPagina, setItensPorPagina] = useState("5");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -155,11 +157,16 @@ export default function AdminDashboard() {
 
     const crescimento = mesPassado ? ((mesAtual - mesPassado) / mesPassado) * 100 : 0;
 
+    const totalProdutos = dados.reduce((total, pedido) => {
+      return total + pedido.itens.reduce((sum, item) => sum + item.quantity, 0);
+    }, 0);
+
     setStats({
       totalPedidos: dados.length,
       pedidosPendentes,
       pedidosHoje,
       crescimentoMensal: crescimento,
+      totalProdutos
     });
   };
 
@@ -231,7 +238,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
             title="Total de Pedidos"
             value={stats.totalPedidos}
@@ -255,6 +262,12 @@ export default function AdminDashboard() {
             value={`${stats.crescimentoMensal.toFixed(1)}%`}
             icon={DollarSign}
             trend={stats.crescimentoMensal >= 0 ? "up" : "down"}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title="Total de Produtos"
+            value={stats.totalProdutos}
+            icon={Package}
             isLoading={isLoading}
           />
         </div>
@@ -464,6 +477,17 @@ function StatCard({ title, value, icon: Icon, trend, isLoading }: StatCardProps)
 function TabelaPedidoRow({ pedido, onVerDetalhes }: TabelaPedidoRowProps) {
   const router = useRouter();
 
+  // Calcular quantidade de itens diferentes no pedido
+  const totalItens = pedido.itens.length;
+
+  // Calcular soma total de todas as quantidades
+  const totalQuantidades = pedido.itens.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Criar string com detalhes dos produtos
+  const detalheProdutos = pedido.itens.map(item => 
+    `${item.quantity}x ${item.name}${item.observation ? ` (Obs: ${item.observation})` : ''}`
+  ).join(', ');
+
   return (
     <tr className="border-b">
       <td className="p-4">#{pedido.id}</td>
@@ -472,16 +496,24 @@ function TabelaPedidoRow({ pedido, onVerDetalhes }: TabelaPedidoRowProps) {
       </td>
       <td className="p-4">{pedido.email}</td>
       <td className="p-4">
-        <span className={`px-3 py-1 rounded-full text-sm ${
-          pedido.status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-          pedido.status === 'Em Análise' ? 'bg-blue-100 text-blue-800' :
-          pedido.status === 'Aprovado' ? 'bg-green-100 text-green-800' :
-          pedido.status === 'Entregue' ? 'bg-purple-100 text-purple-800' :
-          pedido.status === 'Finalizado' ? 'bg-gray-100 text-gray-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {pedido.status}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className={`px-3 py-1 rounded-full text-sm ${
+            pedido.status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
+            pedido.status === 'Em Análise' ? 'bg-blue-100 text-blue-800' :
+            pedido.status === 'Aprovado' ? 'bg-green-100 text-green-800' :
+            pedido.status === 'Entregue' ? 'bg-purple-100 text-purple-800' :
+            pedido.status === 'Finalizado' ? 'bg-gray-100 text-gray-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {pedido.status}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {totalItens} {totalItens === 1 ? 'item' : 'itens'} ({totalQuantidades} {totalQuantidades === 1 ? 'unidade' : 'unidades'})
+          </span>
+          <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={detalheProdutos}>
+            {detalheProdutos}
+          </span>
+        </div>
       </td>
       <td className="p-4">
         <Button 

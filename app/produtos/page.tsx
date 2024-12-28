@@ -7,6 +7,7 @@ import { ProductFilter } from "@/components/product-filter";
 import { ProductSkeleton } from "@/components/product-skeleton";
 import { products } from "@/data/products";
 import { Filter } from "lucide-react";
+import Image from "next/image";
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -17,7 +18,7 @@ export default function ProductsPage() {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, [selectedCategory]);
@@ -38,6 +39,92 @@ export default function ProductsPage() {
         >
           Nossos Produtos
         </motion.h1>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-12"
+        >
+          <h2 className="text-2xl font-semibold mb-6 text-center">Produtos em Destaque</h2>
+          
+          <div className="relative">
+            {/* Área de scroll horizontal */}
+            <div className="overflow-x-auto pb-6 scrollbar-hide">
+              <div className="flex space-x-6 px-4 md:px-8">
+                {[
+                  // Pegar os primeiros produtos não-mobiliário
+                  ...products
+                    .filter(p => p.category !== 'mobiliario')
+                    .slice(0, 8), // Pega apenas os 8 primeiros produtos não-mobiliário
+                  // Adiciona os produtos de mobiliário por último
+                  ...products
+                    .filter(p => p.category === 'mobiliario')
+                    .slice(0, 2)
+                ].map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex-shrink-0 w-[280px] group"
+                  >
+                    <div className="bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 h-full">
+                      <div className="relative h-[320px]">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-opacity duration-300" />
+                        
+                        {/* Tag de categoria */}
+                        <div className="absolute top-4 right-4">
+                          <span className="px-3 py-1 bg-white/90 dark:bg-black/90 rounded-full text-xs font-medium">
+                            {product.category === 'toalhas' || 
+                             product.category === 'toalhas-redondas' || 
+                             product.category === 'toalhas-quadradas' ? 'Toalhas' :
+                             product.category === 'guardanapos' ? 'Guardanapos' :
+                             product.category === 'trilhos' ? 'Trilhos' : 
+                            product.category === 'mobiliario' ? 'Mobiliário' : 'Mobiliário'}
+                          </span>
+                        </div>
+
+                        {/* Nome do produto sobreposto à imagem */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h3 className="font-semibold text-lg text-white line-clamp-2">
+                            {product.name}
+                          </h3>
+                          <p className="text-sm text-white/80 line-clamp-2 mt-2">
+                            {product.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Gradientes de fade nas laterais ajustados */}
+            <div className="absolute left-0 top-0 bottom-6 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-6 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-8"
+        >
+          <h2 className="text-2xl md:text-3xl font-semibold mb-3">Nosso Catálogo Completo</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Explore nossa coleção completa e selecione os produtos para seu orçamento. 
+            Personalize sua escolha utilizando os filtros abaixo.
+          </p>
+        </motion.div>
 
         <div className="md:hidden mb-6">
           <div className="relative">

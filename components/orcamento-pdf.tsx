@@ -8,7 +8,9 @@ const styles = StyleSheet.create({
   page: {
     padding: 30,
     backgroundColor: '#ffffff',
-    fontFamily: 'Helvetica'
+    fontFamily: 'Helvetica',
+    display: 'flex',
+    flexDirection: 'column'
   },
   header: {
     backgroundColor: '#1a1a1a',
@@ -38,16 +40,13 @@ const styles = StyleSheet.create({
     fontSize: 10
   },
   section: {
-    marginBottom: 15
+    marginBottom: 10
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    backgroundColor: '#f9fafb',
-    padding: 6,
-    borderRadius: 4,
-    marginBottom: 8
+    marginBottom: 4
   },
   infoGrid: {
     flexDirection: 'row',
@@ -55,8 +54,6 @@ const styles = StyleSheet.create({
     gap: 8
   },
   infoBlock: {
-    flex: 1,
-    minWidth: '30%',
     backgroundColor: '#f9fafb',
     padding: 12,
     borderRadius: 4,
@@ -69,8 +66,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 10,
-    color: '#1a1a1a',
-    fontWeight: 'bold'
+    color: '#000000',
   },
   itemRow: {
     flexDirection: 'row',
@@ -119,7 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     padding: 12,
     borderRadius: 6,
-    marginTop: 15
+    marginTop: 10
   },
   summaryRow: {
     flexDirection: 'row',
@@ -158,10 +154,11 @@ const styles = StyleSheet.create({
     bottom: 30,
     left: 30,
     right: 30,
+   
     textAlign: 'center',
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
-    paddingTop: 12
+    paddingTop: 30,
   },
   addressBlock: {
     backgroundColor: '#f9fafb',
@@ -173,6 +170,48 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#1a1a1a',
     marginBottom: 4
+  },
+  paymentAndObsContainer: {
+    gap: 8,
+    marginBottom: 16
+  },
+  observationContainer: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#f8fafc',
+    borderRadius: 4,
+  },
+  observationLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#4a5568',
+    marginBottom: 2,
+  },
+  observationText: {
+    fontSize: 10,
+    color: '#4a5568',
+    marginBottom: 4,
+  },
+  cabeca: {
+    marginBottom: 20,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#1a1a1a',
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  headerText: {
+    fontSize: 10,
+  },
+  jantunes:{
+    fontSize: 10,
+    color: '#ffffff',
   }
 });
 
@@ -184,7 +223,9 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.page} wrap={false}>
+      
+
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
@@ -195,6 +236,7 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
             <Text style={styles.subtitle}>
               Emitido em {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
             </Text>
+           
           </View>
         </View>
 
@@ -221,8 +263,9 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Local de Entrega</Text>
+          
           <View style={styles.addressBlock}>
+          <Text style={styles.sectionTitle}>Local de Entrega</Text>
             <Text style={styles.addressLine}>
               {pedido.endereco.rua}, {pedido.endereco.numero}
               {pedido.endereco.complemento ? ` - ${pedido.endereco.complemento}` : ''}
@@ -251,14 +294,41 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
                   <Text style={styles.label}>Valor unitário: R$ {item.valorUnitario.toFixed(2)}</Text>
                 </View>
                 {item.observation && (
-                  <Text style={styles.itemDescription}>{item.observation}</Text>
+                  <View style={styles.observationContainer}>
+                    <Text style={styles.observationLabel}>Observação do Cliente:</Text>
+                    <Text style={styles.observationText}>{item.observation}</Text>
+                    {item.adminResponse && (
+                      <>
+                        <Text style={styles.observationLabel}>Nossa Resposta:</Text>
+                        <Text style={styles.observationText}>{item.adminResponse}</Text>
+                      </>
+                    )}
+                  </View>
                 )}
               </View>
             </View>
           ))}
         </View>
 
-        <View style={styles.summaryBox}>
+        <View style={styles.section}>
+          <View style={styles.paymentAndObsContainer}>
+            {orcamento.formaPagamento && (
+              <View style={styles.infoBlock}>
+                <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
+                <Text style={styles.value}>{orcamento.formaPagamento}</Text>
+              </View>
+            )}
+
+            {orcamento.observacoes && (
+              <View style={styles.infoBlock}>
+                <Text style={styles.sectionTitle}>Observações</Text>
+                <Text style={styles.value}>{orcamento.observacoes}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={[styles.summaryBox, { marginTop: 'auto' }]}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>R$ {subtotal.toFixed(2)}</Text>
@@ -273,10 +343,16 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={[styles.value, { marginBottom: 4 }]}>J.ANTUNES LOCAÇÕES</Text>
-          <Text style={styles.label}>Tel: (11) 94252-1204 | Email: j.antuness@gmail.com</Text>
+        <View style={[styles.footer, { marginTop: 20 }]}>
+          <Text style={[styles.jantunes, { marginBottom: 4 }]}>J.ANTUNES LOCAÇÕES</Text>
+
+          <Text style={styles.label}>CNPJ: 18.523.276/0001-10</Text>
+          <Text style={styles.label}>Tel: (11) 94252-1204 | Email: jovi.antunes@gmail.com</Text>
+          <Text style={styles.label}>Aluguel de móveis, utensílios para festas</Text>
           <Text style={styles.label}>Validade do orçamento: 7 dias a partir da data de emissão</Text>
+          <Text style={styles.label}>R: Presidente Felix Paiva, 595 - Casa 04 - JD. Jaragua</Text>
+          <Text style={styles.label}>São Paulo - SP - CEP: 05265-050</Text>
+  
         </View>
       </Page>
     </Document>
