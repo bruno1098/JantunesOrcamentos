@@ -101,34 +101,59 @@ export default function OrcamentoPage({ params }: { params: { id: string } }) {
         return;
       }
 
-      // Log para debug
-      console.log("Pedido:", pedido);
-      console.log("Orçamento:", orcamento);
+      // Atualizar valorTotal antes de gerar o PDF
+      setOrcamento(prev => ({
+        ...prev,
+        valorTotal: calcularTotal()
+      }));
 
-      // Tentar gerar o PDF
-      const blob = await pdf(
-        <OrcamentoPDF 
-          orcamento={orcamento} 
-          pedido={pedido} 
-        />
-      ).toBlob();
+      console.log("Iniciando geração do PDF...");
+      
+      // Tentar gerar o PDF com try/catch específico
+      let blob;
+      try {
+        blob = await pdf(
+          <OrcamentoPDF 
+            orcamento={{
+              ...orcamento,
+              valorTotal: calcularTotal()
+            }} 
+            pedido={pedido}
+          />
+        ).toBlob();
+        console.log("Blob do PDF gerado com sucesso");
+      } catch (pdfError) {
+        console.error("Erro na geração do blob do PDF:", pdfError);
+        throw pdfError;
+      }
 
-      // Download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `orcamento-${pedido.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      console.log("Iniciando download...");
 
-      toast.success("PDF gerado com sucesso!");
+      try {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `orcamento-${pedido.id}.pdf`;
+        
+        // Forçar o download
+        document.body.appendChild(link);
+        console.log("Link criado, iniciando download...");
+        link.click();
+        
+        // Pequeno delay antes de limpar
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log("Download concluído");
+        
+        toast.success("PDF gerado com sucesso!");
+      } catch (downloadError) {
+        console.error("Erro no processo de download:", downloadError);
+        throw downloadError;
+      }
     } catch (error) {
       console.error("Erro detalhado ao gerar PDF:", error);
-      // Log adicional para debug
-      console.log("Estado do pedido:", pedido);
-      console.log("Estado do orçamento:", orcamento);
       toast.error("Erro ao gerar o PDF. Tente novamente.");
     }
   };
