@@ -7,24 +7,29 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Maria Silva",
-    role: "Organizadora de Eventos",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=2787",
-    content: "A qualidade das toalhas e o atendimento da J.Antunes são excepcionais. Sempre que preciso para meus eventos, é minha primeira escolha.",
+    event: "Herbalife Extravaganza",
+    location: "Rio de Janeiro",
+    image: "https://lirp.cdn-website.com/f46edd80/dms3rep/multi/opt/10527898_339947799491193_6388993967165438990_n-586w.jpg",
+    content: "O Herbalife Extravaganza foi um evento grandioso, e as toalhas fornecidas pela J.Antunes adicionaram um toque de sofisticação que fez toda a diferença. A qualidade do material foi amplamente elogiada por nossos participantes e deixou uma impressão duradoura.",
+    client: "Equipe Organizadora Herbalife",
   },
   {
-    name: "João Santos",
-    role: "Chef de Cozinha",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=2787",
-    content: "Os produtos da J.Antunes elevam a apresentação dos meus eventos gastronômicos. A atenção aos detalhes é impressionante.",
+    event: "Jantar de Homenagem Natura",
+    location: "Cajamar, SP",
+    image: "https://lirp.cdn-website.com/f46edd80/dms3rep/multi/opt/82830575_1522679404551354_1457114045109764096_o-774dd1c2-435h.jpg",
+    content: "No jantar em homenagem aos nossos funcionários, a escolha das toalhas foi essencial para criar um ambiente acolhedor e elegante. A J.Antunes foi impecável, entregando produtos de alta qualidade que atenderam e superaram as nossas expectativas.",
+    client: "Equipe de Eventos Natura",
   },
   {
-    name: "Ana Costa",
-    role: "Decoradora",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=2788",
-    content: "Trabalho com a J.Antunes há anos e nunca me decepcionei. A variedade e qualidade dos produtos são incomparáveis.",
+    event: "Evento Sensacional no Golden Hall",
+    location: "Golden Hall, WTC",
+    image: "https://lirp.cdn-website.com/f46edd80/dms3rep/multi/opt/13615352_661309920688311_8699594650603769949_n-586w.jpg",
+    content: "Nosso evento no Golden Hall precisava de um padrão elevado, e as toalhas fornecidas pela J.Antunes se destacaram pela sofisticação e acabamento impecável. Os elogios dos participantes foram inúmeros, e temos certeza de que essa parceria continuará nos próximos eventos.",
+    client: "Equipe de Produção",
   },
 ];
+
+
 
 export function Testimonials() {
   // Ref para o título
@@ -122,15 +127,15 @@ export function Testimonials() {
                 <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
                   <Image
                     src={testimonial.image}
-                    alt={testimonial.name}
+                    alt={testimonial.event}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <h4 className="font-bold">{testimonial.name}</h4>
+                  <h4 className="font-bold">{testimonial.event}</h4>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    {testimonial.role}
+                    {testimonial.location} 
                   </p>
                 </div>
               </div>

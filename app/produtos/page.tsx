@@ -13,8 +13,20 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  // Definição dos variants para animação dos cartões
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
 
+  useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -50,7 +62,12 @@ export default function ProductsPage() {
           
           <div className="relative">
             {/* Área de scroll horizontal */}
-            <div className="overflow-x-auto pb-6 scrollbar-hide">
+            <motion.div
+              initial={{ opacity: 0, x: -100 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              className="overflow-x-auto pb-6 scrollbar-hide"
+            >
               <div className="flex space-x-6 px-4 md:px-8">
                 {[
                   // Pegar os primeiros produtos não-mobiliário
@@ -64,19 +81,24 @@ export default function ProductsPage() {
                 ].map((product, index) => (
                   <motion.div
                     key={product.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
                     transition={{ delay: index * 0.1 }}
                     className="flex-shrink-0 w-[280px] group"
                   >
                     <div className="bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 h-full">
                       <div className="relative h-[320px]">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
+                        {isLoading ? (
+                          <ProductSkeleton /> // Exibe o skeleton enquanto carrega
+                        ) : (
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-none group-hover:scale-100"
+                          />
+                        )}
                         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-opacity duration-300" />
                         
                         {/* Tag de categoria */}
@@ -105,7 +127,7 @@ export default function ProductsPage() {
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
             
             {/* Gradientes de fade nas laterais ajustados */}
             <div className="absolute left-0 top-0 bottom-6 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" />
