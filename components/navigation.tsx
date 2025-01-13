@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Menu, X, ShoppingCart } from "lucide-react";
+import { Moon, Sun, Menu, X, ShoppingCart, Home, ShoppingBag, HelpCircle, Info, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Cart } from "@/components/cart";
@@ -159,56 +159,52 @@ export function Navigation() {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white dark:bg-neutral-900"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="fixed inset-x-0 top-16 p-4 md:hidden bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg border-b border-neutral-200 dark:border-neutral-800 z-50"
             >
-              <div className="px-4 pt-2 pb-3 space-y-1">
-                <Link
-                  href="/"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Início
-                </Link>
-                <Link
-                  href="/produtos"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Produtos
-                </Link>
-                <Link
-                  href="/duvidas-frequentes"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dúvidas Frequentes
-                </Link>
-                <Link
-                  href="/about"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sobre
-                </Link>
-                <Link
-                  href="/contato"
-                  className="block px-3 py-2 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Contato
-                </Link>
-                <div className="px-3 py-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  >
-                    <Sun className="h-8 w-8 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-8 w-8 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  </Button>
+              <div className="max-w-lg mx-auto">
+                <nav className="grid gap-3">
+                  {[
+                    { href: "/", label: "Início", icon: Home },
+                    { href: "/produtos", label: "Produtos", icon: ShoppingBag },
+                    { href: "/duvidas-frequentes", label: "Dúvidas Frequentes", icon: HelpCircle },
+                    { href: "/about", label: "Sobre", icon: Info },
+                    { href: "/contato", label: "Contato", icon: Phone }
+                  ].map((item, index) => (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-all"
+                      >
+                        <item.icon className="w-5 h-5 text-primary" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </nav>
+
+                <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                      className="rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
+                    >
+                      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                      <span className="sr-only">Alternar tema</span>
+                    </Button>
+                    <CartButton isMobile />
+                  </div>
                 </div>
               </div>
             </motion.div>
