@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AdminGuard from "@/components/admin-guard";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { buscarTodosPedidos } from "@/lib/pedidos-service";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -202,11 +201,6 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuth");
-    router.push("/admin/login");
-  };
-
   const getPedidosFiltrados = () => {
     let pedidosFiltrados = [...pedidos];
 
@@ -228,16 +222,15 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AdminGuard>
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
-          <Button variant="destructive" onClick={handleLogout}>
-            Sair
-          </Button>
-        </div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
+        <Button onClick={() => router.push("/admin/pedidos/novo")}>
+          Criar Pedido Manualmente
+        </Button>
+      </div>
 
-        {/* Cards de Estatísticas */}
+      {/* Cards de Estatísticas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
             title="Total de Pedidos"
@@ -433,9 +426,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </AdminGuard>
   );
 }
+
 
 // Componentes auxiliares
 function StatCard({ title, value, icon: Icon, trend, isLoading }: StatCardProps) {

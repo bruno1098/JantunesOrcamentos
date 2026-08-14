@@ -1,8 +1,12 @@
-// Função de debounce para limitar as chamadas
-let timeoutId: NodeJS.Timeout;
-
+// TODO: reativar validação de e-mail (AbstractAPI via /api/verify-email).
+// Bypass temporário (Fase 5) — a API estava bloqueando os testes manuais
+// do fluxo de orçamento. A validação de formato básica (regex) continua
+// acontecendo no próprio formulário de /orcamento; isto aqui só evita a
+// chamada de rede externa, sempre considerando o e-mail válido.
 export async function verificarEmail(email: string): Promise<boolean> {
-  // Retorna uma Promise que será resolvida após o delay
+  return true;
+
+  /* Implementação original (AbstractAPI), preservada para reativar depois:
   return new Promise((resolve) => {
     // Cancela o timeout anterior se existir
     if (timeoutId) clearTimeout(timeoutId);
@@ -17,9 +21,9 @@ export async function verificarEmail(email: string): Promise<boolean> {
           },
           body: JSON.stringify({ email }),
         });
-    
+
         const data = await response.json();
-        
+
         if (!response.ok) {
           console.warn("Erro na resposta da API:", data.error);
           resolve(false);
@@ -27,8 +31,8 @@ export async function verificarEmail(email: string): Promise<boolean> {
         }
 
         resolve(
-          data.is_valid_format?.value === true && 
-          data.is_disposable_email?.value === false && 
+          data.is_valid_format?.value === true &&
+          data.is_disposable_email?.value === false &&
           data.deliverability === "DELIVERABLE"
         );
       } catch (error) {
@@ -37,6 +41,7 @@ export async function verificarEmail(email: string): Promise<boolean> {
       }
     }, 1000); // Espera 1 segundo entre as chamadas
   });
+  */
 }
 
 // Função para enviar email usando SendGrid

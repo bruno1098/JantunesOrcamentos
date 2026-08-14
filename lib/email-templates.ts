@@ -1,5 +1,7 @@
 import { CartItem } from "@/store/cart-store";
 
+import { CONTATO } from "./constants";
+
 export interface EmailItem {
   id: string;
   name: string;
@@ -232,7 +234,7 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
           </div>
 
           <div class="cta-button">
-            <a href="https://locacaodetoalhas.vercel.app/meus-pedidos" class="button">
+            <a href="${CONTATO.siteUrl}/meus-pedidos" class="button">
               Acompanhar Pedido
             </a>
           </div>
@@ -240,9 +242,9 @@ export function gerarEmailCliente(pedido: PedidoEmailProps) {
 
         <!-- Rodapé -->
         <div class="footer">
-          <p><strong>J.ANTUNES</strong></p>
-          <p>Telefone: (11) 94252-1204</p>
-          <p>Email: j.antuness@gmail.com</p>
+          <p><strong>${CONTATO.nomeEmpresa}</strong></p>
+          <p>Telefone: ${CONTATO.telefoneExibicao}</p>
+          <p>Email: ${CONTATO.email}</p>
           <p>© ${new Date().getFullYear()} J.Antunes. Todos os direitos reservados.</p>
         </div>
       </div>
@@ -443,9 +445,9 @@ export function gerarEmailAdmin(pedido: PedidoEmailProps) {
         </div>
 
         <div class="footer">
-          <p><strong>J.ANTUNES</strong></p>
-          <p>Telefone: (11) 94252-1204</p>
-          <p>Email: j.antuness@gmail.com</p>
+          <p><strong>${CONTATO.nomeEmpresa}</strong></p>
+          <p>Telefone: ${CONTATO.telefoneExibicao}</p>
+          <p>Email: ${CONTATO.email}</p>
           <p>© ${new Date().getFullYear()} J.Antunes. Todos os direitos reservados.</p>
         </div>
       </div>

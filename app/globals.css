@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Leaflet precisa do próprio CSS para o tile layer e o marker
+   renderizarem corretamente (tamanho dos tiles, z-index dos controles).
+   Importado aqui (globals.css) porque o App Router só permite CSS
+   global a partir dos arquivos que chegam à raiz — e tanto o site
+   público quanto o admin usam mapa (ver components/mapa/mapa-endereco.tsx). */
+@import "leaflet/dist/leaflet.css";
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

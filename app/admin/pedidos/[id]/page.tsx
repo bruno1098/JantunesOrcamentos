@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, MapPin, Calendar, Mail, Package } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pedido } from "@/types/pedido";
+import { MapaEnderecoLazy as MapaEndereco } from "@/components/mapa/mapa-endereco-lazy";
 
 const STATUS_COLORS = {
   "Pendente": "bg-yellow-100 text-yellow-800",
@@ -81,9 +82,10 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
         return;
       }
 
+      // `dataAtualizacao` não é enviado: o Postgres cuida disso sozinho
+      // via trigger a cada UPDATE (ver sqls/01_create_pedidos_table.sql).
       await atualizarPedido(pedido.id, {
         status: novoStatus,
-        dataAtualizacao: new Date().toISOString()
       });
 
       // Atualizar o estado local
@@ -104,7 +106,7 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
 
   if (!pedido) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 p-8 flex items-center justify-center">
+      <div className="p-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -124,7 +126,7 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Button
@@ -173,8 +175,11 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
                     {pedido.status}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    Última atualização: {pedido.dataAtualizacao ? 
-                      format(new Date(pedido.dataAtualizacao.toDate()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) :
+                    Última atualização: {pedido.dataAtualizacao ?
+                      // dataAtualizacao agora é sempre uma string ISO do
+                      // Postgres — não é mais um Firestore Timestamp,
+                      // então não tem (nem precisa de) `.toDate()`.
+                      format(new Date(pedido.dataAtualizacao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) :
                       "Não disponível"
                     }
                   </span>
@@ -266,21 +271,10 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
                 </div>
 
                 {pedido.endereco.latitude && pedido.endereco.longitude && (
-                  <div className="mt-4">
-                    <iframe
-                      width="100%"
-                      height="200"
-                      frameBorder="0"
-                      scrolling="no"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${
-                        pedido.endereco.longitude - 0.01
-                      },${pedido.endereco.latitude - 0.01},${
-                        pedido.endereco.longitude + 0.01
-                      },${pedido.endereco.latitude + 0.01
-                      }&layer=mapnik&marker=${pedido.endereco.latitude},${
-                        pedido.endereco.longitude
-                      }`}
-                      className="rounded-lg"
+                  <div className="mt-4 h-[200px] overflow-hidden rounded-lg border">
+                    <MapaEndereco
+                      latitude={pedido.endereco.latitude}
+                      longitude={pedido.endereco.longitude}
                     />
                   </div>
                 )}
@@ -307,7 +301,7 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <Skeleton className="h-10 w-24" />

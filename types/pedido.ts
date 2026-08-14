@@ -20,7 +20,14 @@ export interface Endereco {
 }
 
 export interface Pedido {
-  id: string;
+  id: string; // numero_pedido — código curto e público (ex: "10042"), não o uuid interno
+  /**
+   * uuid interno da linha em `pedidos` no Supabase (era inexistente no
+   * Firestore, onde o doc.id não era usado). Usado internamente pelo
+   * DAL (ex: FK ao criar/buscar um orçamento) — não é exibido na UI.
+   * Opcional para não quebrar código legado que monta um Pedido "à mão".
+   */
+  pedidoUuid?: string;
   nomeEvento: string;
   data: string;
   dataEntrega: string;
@@ -30,7 +37,9 @@ export interface Pedido {
   endereco: Endereco;
   itens: ItemPedido[];
   mensagem?: string;
-  dataAtualizacao?: any;
+  // Sempre uma string ISO vinda do Postgres (timestamptz) agora — nunca
+  // mais um Firestore Timestamp (que exigia `.toDate()` para virar Date).
+  dataAtualizacao?: string;
 }
 
 export interface PedidoEmailProps extends Omit<Pedido, 'dataAtualizacao'> {} 

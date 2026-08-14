@@ -1,13 +1,16 @@
 import { MetadataRoute } from 'next';
-import { products } from '@/data/products';
+import { CONTATO } from '@/lib/constants';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://locacaodetoalhas.vercel.app';
+  const baseUrl = CONTATO.siteUrl;
 
+  // Só rotas estáticas que de fato existem no app/ — não há página de
+  // produto individual (app/produtos/ é somente a listagem), então
+  // nenhuma rota dinâmica de produto é gerada aqui.
   const routes = [
     { url: '', priority: 1 }, // Página inicial
     { url: '/produtos', priority: 0.9 },
-    { url: '/sobre', priority: 0.7 },
+    { url: '/about', priority: 0.7 },
     { url: '/contato', priority: 0.8 },
     { url: '/duvidas-frequentes', priority: 0.6 },
   ].map((route) => ({
@@ -16,15 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
   }));
-  
 
-  const productRoutes = products.map((product) => ({
-    url: `${baseUrl}/produtos/${product.id}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }));
-
-  
-  return [...routes, ...productRoutes];
+  return routes;
 } 

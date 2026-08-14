@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product } from '@/data/products';
 
 export interface CartItem {
   id: string;
@@ -18,16 +17,24 @@ const defaultImage = "https://via.placeholder.com/300";
 
 interface CartState {
   items: CartItem[];
+  // Estado do Sheet do carrinho, centralizado aqui (não mais local em
+  // Navigation) — precisa ser acionável de qualquer lugar (ex: toast de
+  // "Ir para o carrinho" em product-card.tsx, StickyCartBar), não só
+  // pelo ícone no header.
+  isCartOpen: boolean;
   addItem: (item: Omit<CartItem, 'id'> & { id: number | string }) => void;
   removeItem: (id: string) => void;
   updateItemQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+      isCartOpen: false,
       addItem: (item) =>
         set((state) => {
           const itemId = String(item.id);
@@ -64,10 +71,16 @@ export const useCartStore = create<CartState>()(
           ),
         })),
       clearCart: () => set({ items: [] }),
+      openCart: () => set({ isCartOpen: true }),
+      closeCart: () => set({ isCartOpen: false }),
     }),
     {
       name: 'cart-storage',
       skipHydration: true,
+      // Só `items` precisa sobreviver a um reload — `isCartOpen` é
+      // estado de UI efêmero; sem isso, o Sheet do carrinho reabriria
+      // sozinho ao recarregar a página se tivesse ficado aberto.
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );
