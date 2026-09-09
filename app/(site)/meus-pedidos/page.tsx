@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { ItemPedido } from "@/types/pedido";
 import { STATUS_COLORS } from "@/lib/constants";
+import { isValidImageUrl } from "@/lib/image-utils";
+import { ImageOff } from "lucide-react";
 import type { BuscarPedidosResult } from "@/app/api/meus-pedidos/email/route";
 import type { PedidoComOrcamento } from "@/app/api/meus-pedidos/_lib";
 import { MapaEnderecoLazy as MapaEndereco } from "@/components/mapa/mapa-endereco-lazy";
@@ -218,11 +220,15 @@ export default function MeusPedidosPage() {
                         )?.valorUnitario;
                         return (
                           <li key={index} className="flex items-start gap-3">
-                            {item.image && (
-                              <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md">
+                            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800">
+                              {isValidImageUrl(item.image) ? (
                                 <Image src={item.image} alt={item.name} fill className="object-cover" />
-                              </div>
-                            )}
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <ImageOff className="h-4 w-4 text-neutral-400" />
+                                </div>
+                              )}
+                            </div>
                             <div className="flex-1 text-sm">
                               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                                 <span className="font-medium">

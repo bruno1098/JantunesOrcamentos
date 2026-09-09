@@ -20,7 +20,8 @@ import { ptBR } from "date-fns/locale";
 import { OrcamentoPDF } from "@/components/orcamento/orcamento-pdf";
 import { pdf } from "@react-pdf/renderer";
 import Image from "next/image";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { FaWhatsapp } from "react-icons/fa";
 import { ProdutoPicker } from "@/components/admin/produto-picker";
 
@@ -355,18 +356,29 @@ export default function OrcamentoPage({ params }: { params: { id: string } }) {
                   {pedido.itens.map((item, index) => (
                     <div key={index} className="bg-secondary/50 rounded-lg p-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-20 h-20 relative rounded-md overflow-hidden">
-                          <Image
-                            src={item.image || '/placeholder.jpg'}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="w-20 h-20 relative rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                          {isValidImageUrl(item.image) ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <ImageOff className="h-6 w-6 text-neutral-400" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1">
                           {/* Cabeçalho do Item */}
                           <div className="flex justify-between items-start mb-3 gap-4">
-                            <h4 className="font-medium text-lg">{item.name}</h4>
+                            <div>
+                              <h4 className="font-medium text-lg">{item.name}</h4>
+                              {item.corEscolhida && (
+                                <p className="text-sm text-muted-foreground">Cor: {item.corEscolhida}</p>
+                              )}
+                            </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
                               <label className="text-sm text-muted-foreground" htmlFor={`qtd-${item.id}`}>
                                 Qtd:

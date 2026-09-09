@@ -10,7 +10,8 @@ import { toast } from 'react-hot-toast';
 import { gerarEmailCliente, gerarEmailAdmin } from "@/lib/email-templates";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Pencil, Trash2, Check } from "lucide-react";
+import { Pencil, Trash2, Check, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { ptBR } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -300,7 +301,8 @@ export default function OrcamentoPage() {
           observation: item.observation,
           image: item.image,
           category: item.category,
-          description: item.description
+          description: item.description,
+          corEscolhida: item.corEscolhida
         })),
         mensagem
       };
@@ -1022,16 +1024,25 @@ export default function OrcamentoPage() {
               <div className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
-                    <div className="w-20 h-20 relative rounded-md overflow-hidden">
-                      <Image
-                        src={item.image || '/placeholder.jpg'}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="w-20 h-20 relative rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                      {isValidImageUrl(item.image) ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <ImageOff className="h-6 w-6 text-neutral-400" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">{item.name}</h3>
+                      {item.corEscolhida && (
+                        <p className="text-sm text-muted-foreground">Cor: {item.corEscolhida}</p>
+                      )}
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Quantidade:</span>
                         {editingId === item.id ? (

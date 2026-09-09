@@ -6,7 +6,8 @@ import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { buscarProdutosAdmin } from "@/lib/produtos-service";
 import { criarProduto, atualizarProduto, deletarProduto } from "./actions";
 import { ProdutoForm } from "@/components/admin/produto-form";
@@ -114,8 +115,14 @@ export default function AdminProdutosPage() {
               produtos.map((produto) => (
                 <tr key={produto.id} className="border-b last:border-0">
                   <td className="p-4">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-md">
-                      <Image src={produto.image} alt={produto.name} fill className="object-cover" />
+                    <div className="relative h-12 w-12 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800">
+                      {isValidImageUrl(produto.image) ? (
+                        <Image src={produto.image} alt={produto.name} fill className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <ImageOff className="h-4 w-4 text-neutral-400" />
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-4 font-medium">{produto.name}</td>

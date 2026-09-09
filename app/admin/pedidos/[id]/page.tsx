@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, MapPin, Calendar, Mail, Package } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Mail, Package, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pedido } from "@/types/pedido";
 import { MapaEnderecoLazy as MapaEndereco } from "@/components/mapa/mapa-endereco-lazy";
@@ -221,16 +222,20 @@ export default function PedidoDetalhes({ params }: { params: { id: string } }) {
                 <div className="space-y-4">
                   {pedido.itens.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
-                      {item.image && (
-                        <div className="relative w-24 h-24">
+                      <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800">
+                        {isValidImageUrl(item.image) ? (
                           <Image
                             src={item.image}
                             alt={item.name}
                             fill
                             className="object-cover rounded-md"
                           />
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageOff className="h-6 w-6 text-neutral-400" />
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1">
                         <h4 className="font-semibold">{item.name}</h4>
                         <p className="text-sm text-muted-foreground">

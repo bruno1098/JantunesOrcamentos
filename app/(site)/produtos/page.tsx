@@ -7,7 +7,8 @@ import { ProductFilter } from "@/components/produtos/product-filter";
 import { ProductSkeleton } from "@/components/produtos/product-skeleton";
 import { buscarProdutos } from "@/lib/produtos-service";
 import { Product } from "@/types/product";
-import { Filter } from "lucide-react";
+import { Filter, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import Image from "next/image";
 import { CONTATO } from "@/lib/constants";
 import { toast } from "react-hot-toast";
@@ -110,16 +111,20 @@ export default function ProductsPage() {
                     className="flex-shrink-0 w-[280px] group"
                   >
                     <div className="bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 h-full">
-                      <div className="relative h-[320px]">
+                      <div className="relative h-[320px] bg-neutral-100 dark:bg-neutral-800">
                         {isLoading ? (
                           <ProductSkeleton /> // Exibe o skeleton enquanto carrega
-                        ) : (
+                        ) : isValidImageUrl(product.image) ? (
                           <Image
                             src={product.image}
                             alt={product.name}
                             fill
                             className="object-cover transition-none group-hover:scale-100"
                           />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageOff className="h-8 w-8 text-neutral-400" />
+                          </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-opacity duration-300" />
                         

@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, ShoppingCart, ShoppingBag } from "lucide-react";
+import { X, ShoppingCart, ShoppingBag, ImageOff } from "lucide-react";
 import Image from "next/image";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -48,17 +49,28 @@ export function Cart({ isOpen, onClose }: CartProps) {
                 exit={{ opacity: 0, y: -20 }}
                 className="bg-secondary/50 rounded-lg p-4"
               >
-                <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-full h-48 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                  {isValidImageUrl(item.image) ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <ImageOff className="h-8 w-8 text-neutral-400" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="text-lg font-medium">{item.name}</h3>
+                    {item.corEscolhida && (
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Cor: {item.corEscolhida}
+                      </p>
+                    )}
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       {item.description}
                     </p>

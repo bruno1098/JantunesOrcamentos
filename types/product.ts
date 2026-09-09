@@ -28,7 +28,15 @@ export interface Product {
   name: string;
   category: string;
   description: string;
+  /**
+   * Retrocompat (Fase 9): sempre igual a `images[0]`. Todo o código que
+   * já existia antes do carrossel (pedidos, PDF, e-mail, listagem do
+   * admin) continua funcionando sem alteração usando este campo — só o
+   * card da vitrine (product-card.tsx) usa `images` de verdade.
+   */
   image: string;
+  /** Todas as fotos do produto (ex: uma por cor). Sempre tem pelo menos 1 item. */
+  images: string[];
   details: ProductDetails;
 }
 

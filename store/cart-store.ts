@@ -11,9 +11,19 @@ export interface CartItem {
   image: string;
   category: string;
   description: string;
+  /** Cor escolhida no Sheet de "Orçar" (Fase 8) — ver types/pedido.ts::ItemPedido. */
+  corEscolhida?: string;
 }
 
-const defaultImage = "https://via.placeholder.com/300";
+// Nada de URL externa aqui (era "https://via.placeholder.com/300" —
+// domínio nunca liberado em next.config.js, e esse serviço de
+// placeholder nem existe mais). Deixar vazio é honesto: alguns
+// produtos hoje têm `imagem_url` vazio de verdade (achado real, não
+// hipotético — ver components/produtos/product-image-carousel.tsx), e
+// cada lugar que renderiza `item.image` já precisa (ou passa a
+// precisar) tratar esse caso mostrando um placeholder local em vez de
+// pedir pro <Image> carregar um src vazio/quebrado.
+const defaultImage = "";
 
 interface CartState {
   items: CartItem[];
@@ -44,7 +54,18 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.map(i =>
                 i.id === itemId
-                  ? { ...i, quantity: i.quantity + item.quantity, observation: item.observation || i.observation }
+                  ? {
+                      ...i,
+                      quantity: i.quantity + item.quantity,
+                      observation: item.observation || i.observation,
+                      // Mesmo padrão de `observation`: mesmo produto
+                      // adicionado de novo pisa na cor anterior em vez de
+                      // virar uma segunda linha no carrinho. Se um dia
+                      // precisar de duas cores do mesmo produto como itens
+                      // separados, isso exige uma chave composta (id+cor)
+                      // — fora do escopo desta fase.
+                      corEscolhida: item.corEscolhida || i.corEscolhida,
+                    }
                   : i
               ),
             };

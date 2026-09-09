@@ -144,13 +144,15 @@ export function orcamentoToRow(orcamento: Orcamento, pedidoUuid: string) {
 // produtos
 // ---------------------------------------------------------------------
 
-/** Formato de uma linha da tabela `produtos` (sqls/02_create_produtos_table.sql). */
+/** Formato de uma linha da tabela `produtos` (sqls/02_create_produtos_table.sql + 10_add_multiple_images_to_produtos.sql). */
 export interface ProdutoRow {
   id: number;
   nome: string;
   categoria: string;
   descricao: string;
   imagem_url: string;
+  /** Pode vir `null`/vazio em teoria (linha pré-migração sem backfill) — por isso o fallback abaixo. */
+  imagens: string[] | null;
   detalhes: ProductDetails;
   ativo: boolean;
   criado_em: string;
@@ -158,12 +160,14 @@ export interface ProdutoRow {
 }
 
 export function produtoRowToProduct(row: ProdutoRow): Product {
+  const images = row.imagens && row.imagens.length > 0 ? row.imagens : [row.imagem_url];
   return {
     id: row.id,
     name: row.nome,
     category: row.categoria,
     description: row.descricao,
-    image: row.imagem_url,
+    image: images[0],
+    images,
     details: row.detalhes,
   };
 }

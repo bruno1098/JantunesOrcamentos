@@ -112,6 +112,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 2
   },
+  itemColor: {
+    fontSize: 9,
+    color: '#374151',
+    marginBottom: 2
+  },
   summaryBox: {
     backgroundColor: '#1a1a1a',
     padding: 12,
@@ -290,6 +295,9 @@ export function OrcamentoPDF({ orcamento, pedido }: { orcamento: Orcamento; pedi
                   <Text style={styles.itemName}>{item.name}</Text>
                   <Text style={styles.value}>R$ {(item.valorUnitario * item.quantity).toFixed(2)}</Text>
                 </View>
+                {item.corEscolhida && (
+                  <Text style={styles.itemColor}>Cor: {item.corEscolhida}</Text>
+                )}
                 <View style={styles.itemDetails}>
                   <Text style={styles.label}>Quantidade: {item.quantity}</Text>
                   <Text style={styles.label}>Valor unitário: R$ {item.valorUnitario.toFixed(2)}</Text>

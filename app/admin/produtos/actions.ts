@@ -66,6 +66,65 @@ async function uploadImagem(
   return data.publicUrl;
 }
 
+/**
+ * Sobe várias imagens em paralelo. `formData.getAll("novasImagens")`
+ * inclui um File "fantasma" (size 0) quando nenhum arquivo novo foi
+ * anexado — por isso o filtro.
+ */
+async function uploadImagens(
+  supabase: ReturnType<typeof createClient>,
+  arquivos: File[]
+): Promise<string[]> {
+  const validos = arquivos.filter((arquivo) => arquivo instanceof File && arquivo.size > 0);
+  return Promise.all(validos.map((arquivo) => uploadImagem(supabase, arquivo)));
+}
+
+/**
+ * Entrada do "manifesto" de ordem montado pelo client (Fase 9.5 —
+ * ver components/admin/produto-form.tsx::handleSubmit). Cada posição do
+ * array é uma URL que já existia OU o índice de um arquivo novo anexado
+ * em paralelo em `formData.getAll("novasImagens")` — os dois tipos
+ * podem estar intercalados em qualquer ordem (é assim que a admin
+ * arrasta as miniaturas pra reordenar existentes+novas juntas).
+ */
+type OrdemImagemEntrada = { tipo: "existente"; url: string } | { tipo: "nova"; indice: number };
+
+function parseOrdemImagens(formData: FormData): OrdemImagemEntrada[] {
+  const raw = formData.get("ordemImagens") as string | null;
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entrada): entrada is OrdemImagemEntrada => {
+      if (!entrada || typeof entrada !== "object") return false;
+      if (entrada.tipo === "existente") return typeof entrada.url === "string";
+      if (entrada.tipo === "nova") return typeof entrada.indice === "number";
+      return false;
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Reconstrói o array final de URLs de imagem, na ordem exata definida
+ * pela admin (drag & drop no formulário) — sobe os arquivos novos e
+ * substitui cada entrada "nova" do manifesto pela URL resultante,
+ * mantendo a posição das entradas "existente" intactas.
+ */
+async function montarImagensFinais(
+  supabase: ReturnType<typeof createClient>,
+  formData: FormData
+): Promise<string[]> {
+  const ordem = parseOrdemImagens(formData);
+  const arquivosNovos = formData.getAll("novasImagens") as File[];
+  const urlsNovas = await uploadImagens(supabase, arquivosNovos);
+
+  return ordem
+    .map((entrada) => (entrada.tipo === "existente" ? entrada.url : urlsNovas[entrada.indice]))
+    .filter((url): url is string => Boolean(url));
+}
+
 function revalidarCatalogo() {
   // /produtos hoje busca os dados no client (useEffect), não fica em
   // cache de Server Component — então isto não tem muito o que
@@ -83,24 +142,27 @@ export async function criarProduto(formData: FormData): Promise<ProdutoActionRes
     const nome = (formData.get("nome") as string | null)?.trim();
     const categoria = (formData.get("categoria") as string | null)?.trim();
     const descricao = (formData.get("descricao") as string | null)?.trim();
-    const imagem = formData.get("imagem") as File | null;
     const ativo = formData.get("ativo") === "on";
 
     if (!nome || !categoria || !descricao) {
       return { success: false, message: "Preencha nome, categoria e descrição." };
     }
-    if (!imagem || imagem.size === 0) {
-      return { success: false, message: "Selecione uma imagem para o produto." };
+
+    const imagens = await montarImagensFinais(supabase, formData);
+    if (imagens.length === 0) {
+      return { success: false, message: "Selecione ao menos uma imagem para o produto." };
     }
 
-    const imagemUrl = await uploadImagem(supabase, imagem);
     const detalhes = parseDetalhes(formData);
 
     const { error } = await supabase.from("produtos").insert({
       nome,
       categoria,
       descricao,
-      imagem_url: imagemUrl,
+      // imagem_url espelha imagens[0] — retrocompatibilidade (ver
+      // sqls/10_add_multiple_images_to_produtos.sql).
+      imagem_url: imagens[0],
+      imagens,
       detalhes,
       ativo,
     });
@@ -123,11 +185,18 @@ export async function atualizarProduto(formData: FormData): Promise<ProdutoActio
     const nome = (formData.get("nome") as string | null)?.trim();
     const categoria = (formData.get("categoria") as string | null)?.trim();
     const descricao = (formData.get("descricao") as string | null)?.trim();
-    const imagem = formData.get("imagem") as File | null;
     const ativo = formData.get("ativo") === "on";
 
     if (!id || !nome || !categoria || !descricao) {
       return { success: false, message: "Preencha nome, categoria e descrição." };
+    }
+
+    // Imagens finais na ordem exata definida pela admin (drag & drop no
+    // formulário) — mistura URLs mantidas e arquivos novos recém-subidos.
+    const imagensFinais = await montarImagensFinais(supabase, formData);
+
+    if (imagensFinais.length === 0) {
+      return { success: false, message: "O produto precisa de ao menos uma imagem." };
     }
 
     const dadosAtualizados: Record<string, unknown> = {
@@ -136,13 +205,11 @@ export async function atualizarProduto(formData: FormData): Promise<ProdutoActio
       descricao,
       detalhes: parseDetalhes(formData),
       ativo,
+      imagens: imagensFinais,
+      // imagem_url espelha imagens[0] — retrocompatibilidade (ver
+      // sqls/10_add_multiple_images_to_produtos.sql).
+      imagem_url: imagensFinais[0],
     };
-
-    // Imagem é opcional na edição: só sobe e troca a URL se uma nova
-    // foi selecionada; senão mantém a que já está salva.
-    if (imagem && imagem.size > 0) {
-      dadosAtualizados.imagem_url = await uploadImagem(supabase, imagem);
-    }
 
     const { error } = await supabase.from("produtos").update(dadosAtualizados).eq("id", id);
     if (error) throw error;

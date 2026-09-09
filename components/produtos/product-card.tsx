@@ -1,123 +1,37 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { Product } from "@/types/product";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useCartStore } from "@/store/cart-store";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import Modal from "react-modal";
-import { getCartIconPosition } from "@/utils/dom-utils";
-import { X } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { Product } from "@/types/product";
+import { buttonVariants } from "@/components/ui/button";
+import { CardContent, CardFooter } from "@/components/ui/card";
+import { ProductImageCarousel } from "@/components/produtos/product-image-carousel";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
   index: number;
 }
 
+/**
+ * Card da vitrine (Fase 10) — o card inteiro agora é um Link pra PDP
+ * (app/(site)/produtos/[id]/page.tsx). Toda a lógica de adicionar ao
+ * orçamento (seleção de cor, quantidade, Zustand, toast) saiu daqui —
+ * mora em components/produtos/produto-detalhes-painel.tsx agora. O
+ * botão "Orçar" abaixo é só visual: não é um <button> de verdade
+ * (aninhar um <button> dentro do <a> que o <Link> renderiza é HTML
+ * inválido e quebra navegação por teclado/leitor de tela) — é um <span>
+ * estilizado com o mesmo buttonVariants do componente Button real, e o
+ * clique nele já é capturado pelo Link que envolve o card inteiro.
+ */
 export function ProductCard({ product, index }: ProductCardProps) {
-  const addItem = useCartStore((state) => state.addItem);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [observation, setObservation] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [animationPosition, setAnimationPosition] = useState({ x: 0, y: 0 });
-  const [elementPosition, setElementPosition] = useState({ left: 0, top: 0 });
-  const productRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleAddToCart = async () => {
-    setIsAdding(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    addItem({ ...product, quantity, observation });
-    setIsAdding(false);
-    setIsModalOpen(false);
-
-    // Toast com ação embutida — antes só confirmava silenciosamente e o
-    // usuário tinha que redescobrir sozinho o ícone do carrinho no
-    // header pra continuar (fechando esse "dead end" da Fase 6/7).
-    toast(
-      (t) => (
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🛍️</span>
-          <div className="flex-1">
-            <p className="font-medium leading-tight">{product.name}</p>
-            <p className="text-sm text-muted-foreground">Adicionado ao orçamento!</p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              toast.dismiss(t.id);
-              useCartStore.getState().openCart();
-            }}
-          >
-            Ver carrinho
-          </Button>
-        </div>
-      ),
-      { duration: 4000, position: "top-right" }
-    );
-
-    setQuantity(1);
-    setObservation("");
-
-    const productElement = productRef.current;
-    if (!productElement) return;
-
-    const productRect = productElement.getBoundingClientRect();
-    const cartPosition = getCartIconPosition();
-    
-    setElementPosition({
-      left: isMobile ? 
-        productRect.left + (productRect.width / 2) - 15 :
-        productRect.left + (productRect.width / 2) - 15,
-      top: isMobile ? 
-        productRect.top + (productRect.height / 2) - 15 :
-        productRect.top + (productRect.height / 2) - 15
-    });
-    
-    const targetX = cartPosition.x - (productRect.left + productRect.width / 2);
-    const targetY = cartPosition.y - (productRect.top + productRect.height / 2);
-
-    setAnimationPosition({
-      x: targetX,
-      y: targetY
-    });
-
-    setShowModal(false);
-    setTimeout(() => {
-      setShowAnimation(true);
-      setTimeout(() => {
-        setShowAnimation(false);
-      }, 1200);
-    }, 300);
-  };
-  const [showFullImage, setShowFullImage] = useState(false);
-
-  // Animação de entrada
   const cardVariants = {
-    hidden: { 
+    hidden: {
       opacity: 0,
       y: 50,
       scale: 0.9,
-      filter: "blur(10px)"
+      filter: "blur(10px)",
     },
     visible: {
       opacity: 1,
@@ -131,75 +45,33 @@ export function ProductCard({ product, index }: ProductCardProps) {
         scale: {
           type: "spring",
           damping: 15,
-          stiffness: 100
-        }
-      }
+          stiffness: 100,
+        },
+      },
     },
     hover: {
       y: -10,
       scale: 1.02,
       transition: {
         duration: 0.3,
-        ease: "easeOut"
-      }
-    }
-  };
-
-  const renderDimensoes = (dimensoes: any) => {
-    if ('mesa' in dimensoes) {
-      return (
-        <div className="space-y-2">
-          <p className="font-medium">Mesa:</p>
-          <ul className="list-disc list-inside pl-2">
-            <li>Comprimento: {dimensoes.mesa.comprimento}</li>
-            <li>Largura: {dimensoes.mesa.largura}</li>
-            <li>Altura: {dimensoes.mesa.altura}</li>
-          </ul>
-          {dimensoes.cadeira && (
-            <>
-              <p className="font-medium mt-2">Cadeira:</p>
-              <ul className="list-disc list-inside pl-2">
-                <li>Altura: {dimensoes.cadeira.altura}</li>
-                <li>Largura: {dimensoes.cadeira.largura}</li>
-                <li>Profundidade: {dimensoes.cadeira.profundidade}</li>
-              </ul>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    // Para produtos que têm dimensões simples (como toalhas)
-    if ('diametro' in dimensoes) {
-      return <p>Diâmetro: {dimensoes.diametro}</p>;
-    }
-
-    if ('comprimento' in dimensoes && 'largura' in dimensoes) {
-      return (
-        <p>
-          {dimensoes.comprimento} x {dimensoes.largura}
-        </p>
-      );
-    }
-
-    return null;
+        ease: "easeOut",
+      },
+    },
   };
 
   return (
-    <>
+    <Link href={`/produtos/${product.id}`} className="block h-full">
       <motion.div
-        ref={productRef}
         variants={cardVariants}
         initial="hidden"
         animate="visible"
         whileHover="hover"
-        className="group relative bg-white dark:bg-neutral-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
+        className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-shadow hover:shadow-lg dark:bg-neutral-800"
       >
         <div className="relative h-48 sm:h-64 overflow-hidden">
-          <Image
-            src={product.image}
+          <ProductImageCarousel
+            images={product.images}
             alt={product.name}
-            fill
             className="object-cover transition-transform duration-300 group-hover:scale-110"
           />
         </div>
@@ -210,238 +82,17 @@ export function ProductCard({ product, index }: ProductCardProps) {
           </p>
         </CardContent>
         <CardFooter className="p-3 sm:p-6 pt-0">
-          <Button
-            className="w-full min-h-[44px] py-3 text-sm sm:py-2 sm:text-base"
-            onClick={() => setIsModalOpen(true)}
-            disabled={isAdding}
-          >
-            {isAdding ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="whitespace-nowrap">Orçar</span>
-              </>
+          <span
+            className={cn(
+              buttonVariants({ size: "default" }),
+              "w-full min-h-[44px] py-3 text-sm sm:py-2 sm:text-base pointer-events-none"
             )}
-          </Button>
+          >
+            <ShoppingCart className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="whitespace-nowrap">Orçar</span>
+          </span>
         </CardFooter>
       </motion.div>
-
-      <AnimatePresence>
-        {showAnimation && (
-          <motion.div
-            initial={{ 
-              opacity: 1,
-              scale: 1,
-              x: 0,
-              y: 0
-            }}
-            animate={{ 
-              opacity: 0,
-              scale: 0.5,
-              x: animationPosition.x,
-              y: animationPosition.y
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ 
-              duration: 1.2,
-              ease: isMobile ? [0.2, 0, 0.4, 1] : [0.4, 0, 0.2, 1],
-              type: "tween"
-            }}
-            className="fixed z-50 pointer-events-none"
-            style={{
-              left: elementPosition.left,
-              top: elementPosition.top,
-              width: isMobile ? "30px" : "40px",
-              height: isMobile ? "30px" : "40px",
-            }}
-          >
-            <motion.div
-              className="w-full h-full relative"
-              animate={{
-                scaleX: [1, 1.2, 0.8, 1],
-                scaleY: [1, 0.8, 1.2, 1],
-              }}
-              transition={{
-                duration: 0.6,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <div className="absolute inset-0 bg-primary/30 rounded-full blur-sm" />
-              <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
-              <motion.div
-                className="absolute inset-0 rounded-full overflow-hidden"
-                animate={{
-                  borderRadius: ["50%", "40% 60% 70% 30%", "40% 60%"],
-                }}
-                transition={{
-                  duration: 0.6,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover scale-150 opacity-70"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent mix-blend-overlay" />
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Sheet lateral no desktop, bottom sheet completo no mobile — era um
-          Modal centralizado que esmagava o input de quantidade em telas
-          pequenas (Fase 7). */}
-      <Sheet open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <SheetContent
-          side={isMobile ? "bottom" : "right"}
-          className={
-            isMobile
-              ? "max-h-[92vh] overflow-y-auto rounded-t-2xl"
-              : "w-full overflow-y-auto sm:max-w-md"
-          }
-        >
-          <SheetHeader>
-            <SheetTitle className="sr-only">Adicionar {product.name} ao orçamento</SheetTitle>
-          </SheetHeader>
-
-          <div className="flex flex-col items-start gap-4 mb-6 mt-2">
-          <div 
-            className="relative w-full h-48 md:h-64 flex-shrink-0 cursor-zoom-in group"
-            onClick={() => setShowFullImage(true)}
-          >
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover rounded-md"
-            />
-            <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity bg-black/20 rounded-md`}>
-              <p className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-                Clique para ampliar
-              </p>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-1">{product.name}</h2>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              {product.description}
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block mb-2">Quantidade:</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            min="1"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
-            className="w-full p-2 border rounded dark:bg-neutral-800 dark:border-neutral-700"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">Observações:</label>
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Nos ajude a entender melhor suas necessidades:
-            </p>
-            <ul className="text-sm text-muted-foreground mb-2 space-y-1">
-              <li>• Qual o tamanho da sua mesa?</li>
-              <li>• Tem preferência de cores?</li>
-              <li>• Precisa de adaptações específicas?</li>
-            </ul>
-            <textarea
-              value={observation}
-              onChange={(e) => setObservation(e.target.value)}
-              placeholder="Ex: Preciso para uma mesa de 2,5m x 0,80m. Gostaria em tons pastéis..."
-              className="w-full p-3 border rounded dark:bg-neutral-800 dark:border-neutral-700"
-              rows={4}
-            ></textarea>
-          </div>
-        </div>
-        <div className="mt-4 space-y-4 border-t pt-4">
-          <div>
-            <h3 className="font-medium mb-2">Detalhes do Produto</h3>
-            
-            {product.details.cores && (
-              <div className="mb-3">
-                <span className="text-sm font-medium">Cores disponíveis:</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {product.details.cores.map((cor) => (
-                    <span key={cor} className="text-sm px-2 py-1 bg-secondary rounded-md">
-                      {cor}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {product.details.dimensoes && (
-              <div className="mb-3">
-                <span className="text-sm font-medium">Dimensões:</span>
-                <div className="mt-1">
-                  {renderDimensoes(product.details.dimensoes)}
-                </div>
-              </div>
-            )}
-
-            {product.details.material && (
-              <div className="mb-3">
-                <span className="text-sm font-medium">Material:</span>
-                <p className="text-sm mt-1">{product.details.material}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-          <div className="sticky bottom-0 -mx-6 mt-6 flex justify-end gap-4 border-t bg-background px-6 py-4">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleAddToCart} disabled={isAdding}>
-              {isAdding ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                "Adicionar"
-              )}
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Modal
-        isOpen={showFullImage}
-        onRequestClose={() => setShowFullImage(false)}
-        className="modal fixed inset-0 bg-black/95 flex items-center justify-center p-4"
-        overlayClassName="modal-overlay"
-      >
-        <div className="relative w-full h-full flex items-center justify-center">
-          <button
-            onClick={() => setShowFullImage(false)}
-            className="absolute top-4 right-4 z-10 p-2 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-black/10 rounded-full transition-colors"
-          >
-            <X className="w-6 h-6 text-black dark:text-white" />
-          </button>
-          <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, 80vw"
-              priority
-            />
-          </div>
-        </div>
-      </Modal>
-    </>
+    </Link>
   );
 }

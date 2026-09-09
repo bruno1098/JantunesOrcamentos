@@ -5,6 +5,17 @@ export interface ItemPedido {
   observation?: string;
   image?: string;
   adminResponse?: string;
+  /**
+   * Cor escolhida pelo cliente no catálogo público (Fase 8) — vem do
+   * `<Select>` de cores do produto, ou digitada à mão se ele escolher
+   * "Outro (Especificar)". Opcional no tipo porque nem todo item nasce
+   * desse fluxo: itens adicionados pela admin (ProdutoPicker, em
+   * app/admin/pedidos/[id]/orcamento e app/admin/pedidos/novo) não
+   * passam por seleção de cor — só o Sheet de "Orçar" do catálogo
+   * público (components/produtos/product-card.tsx) torna isso
+   * obrigatório antes de liberar o botão "Adicionar".
+   */
+  corEscolhida?: string;
 }
 
 export interface Endereco {

@@ -7,7 +7,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ImageOff } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
 import { ProdutoPicker } from "@/components/admin/produto-picker";
 import { salvarPedido } from "@/lib/pedidos-service";
 import { enviarEmail } from "@/lib/email-utils";
@@ -337,13 +338,19 @@ export default function NovoPedidoPage() {
 
               {itens.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 rounded-lg bg-secondary/50 p-3">
-                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-                    <Image
-                      src={item.image || "/placeholder.jpg"}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800">
+                    {isValidImageUrl(item.image) ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <ImageOff className="h-5 w-5 text-neutral-400" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{item.name}</p>
