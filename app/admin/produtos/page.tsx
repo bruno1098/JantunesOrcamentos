@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Plus, Pencil, Trash2, ImageOff } from "lucide-react";
+import { Plus, Pencil, Trash2, ImageOff, FileText } from "lucide-react";
 import { isValidImageUrl } from "@/lib/image-utils";
 import { buscarProdutosAdmin } from "@/lib/produtos-service";
 import { criarProduto, atualizarProduto, deletarProduto } from "./actions";
@@ -79,10 +80,18 @@ export default function AdminProdutosPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-bold">Produtos</h1>
-        <Button onClick={abrirCriacao}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/produtos/catalogo">
+              <FileText className="h-4 w-4 mr-2" />
+              Ver Catálogo
+            </Link>
+          </Button>
+          <Button onClick={abrirCriacao}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border bg-white">

@@ -11,16 +11,7 @@ import { ProdutoAdmin } from "@/types/product";
 import type { ProdutoActionResult } from "@/app/admin/produtos/actions";
 import { SortableImageList, type ImagemFormItem } from "@/components/admin/sortable-image-list";
 import { ImageCropperModal } from "@/components/admin/image-cropper-modal";
-
-const CATEGORIAS = [
-  { value: "toalhas", label: "Toalhas de Mesa" },
-  { value: "toalhas-redondas", label: "Toalhas Redondas" },
-  { value: "toalhas-quadradas", label: "Toalhas Quadradas" },
-  { value: "toalhas-retangulares", label: "Toalhas Retangulares" },
-  { value: "guardanapos", label: "Guardanapos" },
-  { value: "trilhos", label: "Trilhos de Mesa" },
-  { value: "mobiliario", label: "Mobiliário" },
-];
+import { CATEGORIAS_PRODUTO as CATEGORIAS } from "@/lib/constants";
 
 interface ProdutoFormProps {
   /** Presente = edição; ausente = criação. */

@@ -16,6 +16,19 @@ export const CONTATO = {
   nomeEmpresa: "J.Antunes Locação",
 } as const;
 
+// Categorias selecionáveis no cadastro de produto (admin) e usadas como
+// título de seção no catálogo em PDF. `value` é o slug gravado em
+// `produtos.categoria`.
+export const CATEGORIAS_PRODUTO = [
+  { value: "toalhas", label: "Toalhas de Mesa" },
+  { value: "toalhas-redondas", label: "Toalhas Redondas" },
+  { value: "toalhas-quadradas", label: "Toalhas Quadradas" },
+  { value: "toalhas-retangulares", label: "Toalhas Retangulares" },
+  { value: "guardanapos", label: "Guardanapos" },
+  { value: "trilhos", label: "Trilhos de Mesa" },
+  { value: "mobiliario", label: "Mobiliário" },
+] as const;
+
 export const STATUS_COLORS = {
   "Pendente": "bg-yellow-100 text-yellow-800",
   "Em Análise": "bg-blue-100 text-blue-800",
